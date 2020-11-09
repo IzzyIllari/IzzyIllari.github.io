@@ -43,16 +43,16 @@ This dataset contains reviews of 1312 arabica and 28 robusta coffee beans from t
 
 ### Part 0: Setup/Imports
 
-LINK HERE
+<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/setup.md" target="_blank">Analysis code here.</a>
 
 ### Part 1: Data Preprocessing
 
-LINK HERE
+<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/data_preprocessing.md" target="_blank">Analysis code here.</a>
 
 ### Part 2: EDA
 
-LINK HERE
+<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/eda.md" target="_blank">Analysis code here.</a>
 
 ### Part 3: Data Mining 
 
-LINK HERE
+<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/data_mining.md" target="_blank">Analysis code here.</a>
