@@ -40,3 +40,19 @@ This dataset contains reviews of 1312 arabica and 28 robusta coffee beans from t
 6. Mill
 7. Owner
 8. Region
+
+### Part 0: Setup/Imports
+
+LINK HERE
+
+### Part 1: Data Preprocessing
+
+LINK HERE
+
+### Part 2: EDA
+
+LINK HERE
+
+### Part 3: Data Mining 
+
+LINK HERE
