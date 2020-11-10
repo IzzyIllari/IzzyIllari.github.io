@@ -2,7 +2,7 @@
 
 # DATS 6103 - Individual Project 2: A scientific approach to brewing the perfect cup of joe
 ## IZZY ILLARI GWID: G38518463
-[![DOI](https://zenodo.org/badge/311434496.svg)](https://zenodo.org/badge/latestdoi/311434496)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4265473.svg)](https://doi.org/10.5281/zenodo.4265473)
 ### Why this data?
 What makes a good cup of coffee is, by and large, a subjective question. How it's prepared, what flavors should be emphasized, how much sugar, etc, are all considered when the average person has a cup. The Coffee Quality Institute (CQI) was founded by the Specialty Coffee Association of America (SCAA) in 1996 to address quality of coffee and income issues at origin. The CQI trains "Q Graders", or individuals who have been certified by the CQI and who have received comprehensive training in the cupping of coffee samples for the purposes of scoring and identifying individual lots against the SCAA's physical and sensory criteria for specialty quality. The goal of this scoring system is to provide a way to discuss the quality of coffee throughout the chain from the producers to the buyers. In that sense then, there must be a way to find commonalities between high scoring coffees.
 
