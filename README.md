@@ -33,6 +33,7 @@
 # Civilian Complaints Against NYC Police Officers from 1985-2020
 ### DATS 6103 Individual Project 3
 ### Izzy Illari (GWID: G38518463)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4323491.svg)](https://doi.org/10.5281/zenodo.4323491)
 ## Introduction
 <a id = "intro"></a>
 
