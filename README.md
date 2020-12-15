@@ -1,126 +1,80 @@
-<img style="display: block; margin-left: auto; margin-right: 50px" src="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/coffee_cup_trans.png?raw=true" align="left" width="200">
+# Table of Contents
 
-# DATS 6103 - Individual Project 2: A scientific approach to brewing the perfect cup of joe
-## IZZY ILLARI GWID: G38518463
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4265473.svg)](https://doi.org/10.5281/zenodo.4265473)
-### Why this data?
-What makes a good cup of coffee is, by and large, a subjective question. How it's prepared, what flavors should be emphasized, how much sugar, etc, are all considered when the average person has a cup. The Coffee Quality Institute (CQI) was founded by the Specialty Coffee Association of America (SCAA) in 1996 to address quality of coffee and income issues at origin. The CQI trains "Q Graders", or individuals who have been certified by the CQI and who have received comprehensive training in the cupping of coffee samples for the purposes of scoring and identifying individual lots against the SCAA's physical and sensory criteria for specialty quality. The goal of this scoring system is to provide a way to discuss the quality of coffee throughout the chain from the producers to the buyers. In that sense then, there must be a way to find commonalities between high scoring coffees.
+1. [Introduction](#intro)
+1. [Data preprocessing](#dat_pre)
+    1. [Importing the data](#import)
+    1. [Creating data columns](#create_col)
+    1. [Census Data](#census)
+        1. [New York City Population by Borough, 1950 - 2040](#nyopen)
+1. [Exploratory Data Analysis](#eda)
+    1. [Info and Summary](#basics)
+    1. [Pair Plot](#pair_plot)
+    1. [Correlation Matrix](#corr)
+    1. [Racial and ethnic diversity of NYC boroughs](#race_bor)
+        1. [Absolute population values](#abs_pop)
+        1. [Relative population values](#rel_pop)
+    1. [Population of NYC over time](#pop_change)
+1. [Complaints per Officer and per Precinct](#complaints)
+    1. [Absolute number and relative proportion of complaints](#abs_comp)
+    1. [Complaints broken down by race](#comp_race)
+        1. [Race of complainants](#race_complainants)
+        1. [Race of officers](#race_officers)
+1. [Complaints over the years](#comp_years)
+    1. [Absolute number and relative proportion of complaints](#abs_comp_yr)
+    1. [Absolute and relative number of Complaints per borough](#comp_boro_person)
+         1. [Absolute number of complaints](#comp_boro_person_abs)
+         1. [Relative number of complaints](#comp_boro_person_rel)
+1. [Officers with most complaints](#top_offend)
+    1. [First Officer](#offend1)
+    1. [Second Officer](#offend2)
+    1. [Officers with top 5% of complaints](#top10)
+1. [Conclusion](#conclu)
 
-What are the characteristics of a high scoring coffee? Can we predict whether a coffee will score well or poorly? Is there an origin that is prefered? It is the goal of this project to determine if there is a way to determine good coffee from bad coffee, and what a model for determining that might look like.
+# Civilian Complaints Against NYC Police Officers from 1985-2020
+### DATS 6103 Individual Project 3
+### Izzy Illari (GWID: G38518463)
+## Introduction
+<a id = "intro"></a>
 
-### About the data
-This dataset contains reviews of 1312 arabica and 28 robusta coffee beans from the Coffee Quality Institute, and was provided by James LeDoux, a data scientist at BuzzFeed, over on his <a href="https://github.com/jldbc/coffee-quality-database" target="_blank">coffee database GitHub repo</a>. The data in this repo were collected from the Coffee Quality Institute in January 2018. There are several features included in the final datasets:
+This data has been taken from the following <a href="https://www.kaggle.com/mrmorj/civilian-complaints-against-nyc-police-officers">kaggle dataset</a> which states:
 
-#### Quality
+<blockquote>After New York state repealed the statute that kept police disciplinary records secret, known as 50-a, ProPublica filed a records request with New York City’s Civilian Complaint Review Board, which investigates complaints by the public about NYPD officers. The board provided us with records about closed cases for every police officer still on the force as of late June 2020 who had at least one substantiated allegation against them. The records span decades, from September 1985 to January 2020.</blockquote>
 
-1. Acidity
-2. Aftertaste
-3. Aroma
-4. Balance
-5. Body
-6. Cup Cleanliness
-7. Defects
-8. Flavor
-9. Moisture
-10. Sweetness
-11. Uniformity
+Each record lists:
+1. name, 
+1. shield number, 
+1. rank of officer as of today and at the time of the incident, 
+1. precinct of officer as of today and at the time of the incident,
+1. age, race, and gender of the complainant, 
+1. age, race, and gender of the officer,
+1. category describing the alleged misconduct,
+1. whether the CCRB concluded the officers’ conduct violated NYPD rules
 
-#### Bean Metadata
+Currently in the USA we are experiencing another surge of BLM protests that echoes the movements that started back during the Obama administration in 2013. The BLM movement speaks out against the police brutality and systemic racism that has caused the deaths of Black Americans such as Trayvon Martin, Sandra Bland, Tamir Rice, Eric Garner, George Floyd, Breonna Taylor, and many more. The BLM movement has brought the public's attention to the thousands of violent incidents that happen to Black Americans that are not seen and not heard. For incidents that are recorded, we can turn to police reports. 
 
-1. Color
-2. Processing Method
-3. Species
+Although these police reports are insufficient in analyzing the sheer breadth of police encounters that Black Americans must endure with on a daily basis, this does give us a place to start: do the numbers prove what the BLM movement states, and are Black Americans forced to endure more incidents with the police than any other racial and ethnic groups? 
 
-#### Farm Metadata
+For this project I focus on the number one most populous city in the USA: NYC. NYC is incredibly racially diverse, and each of the five boroughs have different racial and ethnic populations. It is the aim of this project to analyze the available data of incidents with the NYPD and see if any patterns arise from the data that might support the conclusion that Black Americans are disproportionately targeted by the police.
 
-1. Altitude
-2. Company
-3. Country of Origin
-4. Farm Name
-5. Lot Number
-6. Mill
-7. Owner
-8. Region
+# Data preprocessing
+<a id = "dat_pre"></a>
 
-# Part 0: Setup/Imports
+## Importing the data
+<a id = "import"></a>
 
-<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/setup.md" target="_blank">Analysis code here.</a>
 
 ```python
-# math and dataframes
-import pandas as pd
-# I keep this just to check that this runs with a print statement
-print("The pandas version is", pd.__version__)
-import numpy as np
-# plotting
-import seaborn as sns
-sns.set(color_codes=True)
-from  matplotlib import pyplot as plt
-%matplotlib inline
-from matplotlib.pyplot import figure
-# for making the models
-import statsmodels.api as sm
-from sklearn import preprocessing
-from sklearn import metrics
-from sklearn.metrics import classification_report
-# used in the regression models
-from imblearn.over_sampling import SMOTE
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import RFE
-from sklearn import metrics
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import plot_confusion_matrix
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
-# used in unsupervised clustering models
-from sklearn.cluster import KMeans
-from kmodes.kmodes import KModes
-# used in supervised machine learning
-from sklearn import svm
-from sklearn.tree import DecisionTreeClassifier
-from sklearn import tree
-import io
-from IPython.display import Image
-# on my mac I needed to do `pip install graphviz` AND `brew install graphviz` (homebrew)
-from sklearn.tree import export_graphviz
-import pydotplus
-# misc
-import pycountry
-import itertools
-import time
 import os
-# warning
-import warnings
-warnings.filterwarnings('ignore')
-```
+import pandas as pd
 
-    The pandas version is 1.1.4
-
-
-
-```python
-# check current directory
-print(os.getcwd())
-# set my current directory
-os.chdir("/Users/iillari/Documents/gwu/fall2020/data_mining/project2")
-# return the current directory as a check
-print(os.getcwd())
-```
-
-    /Users/iillari/Documents/gwu/fall2020/data_mining/project2
-    /Users/iillari/Documents/gwu/fall2020/data_mining/project2
-
-
-# Part 1: Data Preprocessing
-
-<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/data_preprocessing.md" target="_blank">Analysis code here.</a>
-
-```python
-# arabica dataset
-df_arabica = pd.read_csv(r"./data/arabica_data_cleaned.csv")
-df_arabica = df_arabica.drop(columns=["Unnamed: 0"])
-df_arabica.head()
+# get current working idrectory
+path = os.getcwd()
+# get path of allegations_202007271729.csv
+allegations_path = os.path.join(path, "archive/", "allegations_202007271729.csv")
+# create dataframe from the csv
+df_allegations = pd.read_csv(allegations_path)
+# look at top of csv
+df_allegations.head()
 ```
 
 
@@ -144,4041 +98,5083 @@ df_arabica.head()
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Species</th>
-      <th>Owner</th>
-      <th>Country.of.Origin</th>
-      <th>Farm.Name</th>
-      <th>Lot.Number</th>
-      <th>Mill</th>
-      <th>ICO.Number</th>
-      <th>Company</th>
-      <th>Altitude</th>
-      <th>Region</th>
+      <th>unique_mos_id</th>
+      <th>first_name</th>
+      <th>last_name</th>
+      <th>command_now</th>
+      <th>shield_no</th>
+      <th>complaint_id</th>
+      <th>month_received</th>
+      <th>year_received</th>
+      <th>month_closed</th>
+      <th>year_closed</th>
       <th>...</th>
-      <th>Color</th>
-      <th>Category.Two.Defects</th>
-      <th>Expiration</th>
-      <th>Certification.Body</th>
-      <th>Certification.Address</th>
-      <th>Certification.Contact</th>
-      <th>unit_of_measurement</th>
-      <th>altitude_low_meters</th>
-      <th>altitude_high_meters</th>
-      <th>altitude_mean_meters</th>
+      <th>mos_age_incident</th>
+      <th>complainant_ethnicity</th>
+      <th>complainant_gender</th>
+      <th>complainant_age_incident</th>
+      <th>fado_type</th>
+      <th>allegation</th>
+      <th>precinct</th>
+      <th>contact_reason</th>
+      <th>outcome_description</th>
+      <th>board_disposition</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>Ethiopia</td>
-      <td>metad plc</td>
-      <td>NaN</td>
-      <td>metad plc</td>
-      <td>2014/2015</td>
-      <td>metad agricultural developmet plc</td>
-      <td>1950-2200</td>
-      <td>guji-hambela</td>
-      <td>...</td>
-      <td>Green</td>
-      <td>0</td>
-      <td>April 3rd, 2016</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>309fcf77415a3661ae83e027f7e5f05dad786e44</td>
-      <td>19fef5a731de2db57d16da10287413f5f99bc2dd</td>
-      <td>m</td>
-      <td>1950.0</td>
-      <td>2200.0</td>
-      <td>2075.0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>Ethiopia</td>
-      <td>metad plc</td>
-      <td>NaN</td>
-      <td>metad plc</td>
-      <td>2014/2015</td>
-      <td>metad agricultural developmet plc</td>
-      <td>1950-2200</td>
-      <td>guji-hambela</td>
-      <td>...</td>
-      <td>Green</td>
-      <td>1</td>
-      <td>April 3rd, 2016</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>309fcf77415a3661ae83e027f7e5f05dad786e44</td>
-      <td>19fef5a731de2db57d16da10287413f5f99bc2dd</td>
-      <td>m</td>
-      <td>1950.0</td>
-      <td>2200.0</td>
-      <td>2075.0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Arabica</td>
-      <td>grounds for health admin</td>
-      <td>Guatemala</td>
-      <td>san marcos barrancas "san cristobal cuch</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>1600 - 1800 m</td>
-      <td>NaN</td>
-      <td>...</td>
-      <td>NaN</td>
-      <td>0</td>
-      <td>May 31st, 2011</td>
-      <td>Specialty Coffee Association</td>
-      <td>36d0d00a3724338ba7937c52a378d085f2172daa</td>
-      <td>0878a7d4b9d35ddbf0fe2ce69a2062cceb45a660</td>
-      <td>m</td>
-      <td>1600.0</td>
-      <td>1800.0</td>
-      <td>1700.0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>Arabica</td>
-      <td>yidnekachew dabessa</td>
-      <td>Ethiopia</td>
-      <td>yidnekachew dabessa coffee plantation</td>
-      <td>NaN</td>
-      <td>wolensu</td>
-      <td>NaN</td>
-      <td>yidnekachew debessa coffee plantation</td>
-      <td>1800-2200</td>
-      <td>oromia</td>
-      <td>...</td>
-      <td>Green</td>
-      <td>2</td>
-      <td>March 25th, 2016</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>309fcf77415a3661ae83e027f7e5f05dad786e44</td>
-      <td>19fef5a731de2db57d16da10287413f5f99bc2dd</td>
-      <td>m</td>
-      <td>1800.0</td>
-      <td>2200.0</td>
-      <td>2000.0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>Ethiopia</td>
-      <td>metad plc</td>
-      <td>NaN</td>
-      <td>metad plc</td>
-      <td>2014/2015</td>
-      <td>metad agricultural developmet plc</td>
-      <td>1950-2200</td>
-      <td>guji-hambela</td>
-      <td>...</td>
-      <td>Green</td>
-      <td>2</td>
-      <td>April 3rd, 2016</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>309fcf77415a3661ae83e027f7e5f05dad786e44</td>
-      <td>19fef5a731de2db57d16da10287413f5f99bc2dd</td>
-      <td>m</td>
-      <td>1950.0</td>
-      <td>2200.0</td>
-      <td>2075.0</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 43 columns</p>
-</div>
-
-
-
-
-```python
-# robusta dataset
-df_robusta = pd.read_csv(r"./data/robusta_data_cleaned.csv")
-df_robusta = df_robusta.drop(columns=["Unnamed: 0"])
-df_robusta.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Species</th>
-      <th>Owner</th>
-      <th>Country.of.Origin</th>
-      <th>Farm.Name</th>
-      <th>Lot.Number</th>
-      <th>Mill</th>
-      <th>ICO.Number</th>
-      <th>Company</th>
-      <th>Altitude</th>
-      <th>Region</th>
-      <th>...</th>
-      <th>Color</th>
-      <th>Category.Two.Defects</th>
-      <th>Expiration</th>
-      <th>Certification.Body</th>
-      <th>Certification.Address</th>
-      <th>Certification.Contact</th>
-      <th>unit_of_measurement</th>
-      <th>altitude_low_meters</th>
-      <th>altitude_high_meters</th>
-      <th>altitude_mean_meters</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Robusta</td>
-      <td>ankole coffee producers coop</td>
-      <td>Uganda</td>
-      <td>kyangundu cooperative society</td>
-      <td>NaN</td>
-      <td>ankole coffee producers</td>
-      <td>0</td>
-      <td>ankole coffee producers coop</td>
-      <td>1488</td>
-      <td>sheema south western</td>
-      <td>...</td>
-      <td>Green</td>
-      <td>2</td>
-      <td>June 26th, 2015</td>
-      <td>Uganda Coffee Development Authority</td>
-      <td>e36d0270932c3b657e96b7b0278dfd85dc0fe743</td>
-      <td>03077a1c6bac60e6f514691634a7f6eb5c85aae8</td>
-      <td>m</td>
-      <td>1488.0</td>
-      <td>1488.0</td>
-      <td>1488.0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Robusta</td>
-      <td>nishant gurjer</td>
-      <td>India</td>
-      <td>sethuraman estate kaapi royale</td>
-      <td>25</td>
-      <td>sethuraman estate</td>
-      <td>14/1148/2017/21</td>
-      <td>kaapi royale</td>
-      <td>3170</td>
-      <td>chikmagalur karnataka indua</td>
-      <td>...</td>
-      <td>NaN</td>
-      <td>2</td>
-      <td>October 31st, 2018</td>
-      <td>Specialty Coffee Association</td>
-      <td>ff7c18ad303d4b603ac3f8cff7e611ffc735e720</td>
-      <td>352d0cf7f3e9be14dad7df644ad65efc27605ae2</td>
-      <td>m</td>
-      <td>3170.0</td>
-      <td>3170.0</td>
-      <td>3170.0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Robusta</td>
-      <td>andrew hetzel</td>
-      <td>India</td>
-      <td>sethuraman estate</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>0000</td>
-      <td>sethuraman estate</td>
-      <td>1000m</td>
-      <td>chikmagalur</td>
-      <td>...</td>
-      <td>Green</td>
-      <td>0</td>
-      <td>April 29th, 2016</td>
-      <td>Specialty Coffee Association</td>
-      <td>ff7c18ad303d4b603ac3f8cff7e611ffc735e720</td>
-      <td>352d0cf7f3e9be14dad7df644ad65efc27605ae2</td>
-      <td>m</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>Robusta</td>
-      <td>ugacof</td>
-      <td>Uganda</td>
-      <td>ugacof project area</td>
-      <td>NaN</td>
-      <td>ugacof</td>
-      <td>0</td>
-      <td>ugacof ltd</td>
-      <td>1212</td>
-      <td>central</td>
-      <td>...</td>
-      <td>Green</td>
+      <td>10004</td>
+      <td>Jonathan</td>
+      <td>Ruiz</td>
+      <td>078 PCT</td>
+      <td>8409</td>
+      <td>42835</td>
       <td>7</td>
-      <td>July 14th, 2015</td>
-      <td>Uganda Coffee Development Authority</td>
-      <td>e36d0270932c3b657e96b7b0278dfd85dc0fe743</td>
-      <td>03077a1c6bac60e6f514691634a7f6eb5c85aae8</td>
-      <td>m</td>
-      <td>1212.0</td>
-      <td>1212.0</td>
-      <td>1212.0</td>
+      <td>2019</td>
+      <td>5</td>
+      <td>2020</td>
+      <td>...</td>
+      <td>32</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>38.0</td>
+      <td>Abuse of Authority</td>
+      <td>Failure to provide RTKA card</td>
+      <td>78.0</td>
+      <td>Report-domestic dispute</td>
+      <td>No arrest made or summons issued</td>
+      <td>Substantiated (Command Lvl Instructions)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>10007</td>
+      <td>John</td>
+      <td>Sears</td>
+      <td>078 PCT</td>
+      <td>5952</td>
+      <td>24601</td>
+      <td>11</td>
+      <td>2011</td>
+      <td>8</td>
+      <td>2012</td>
+      <td>...</td>
+      <td>24</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>26.0</td>
+      <td>Discourtesy</td>
+      <td>Action</td>
+      <td>67.0</td>
+      <td>Moving violation</td>
+      <td>Moving violation summons issued</td>
+      <td>Substantiated (Charges)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>10007</td>
+      <td>John</td>
+      <td>Sears</td>
+      <td>078 PCT</td>
+      <td>5952</td>
+      <td>24601</td>
+      <td>11</td>
+      <td>2011</td>
+      <td>8</td>
+      <td>2012</td>
+      <td>...</td>
+      <td>24</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>26.0</td>
+      <td>Offensive Language</td>
+      <td>Race</td>
+      <td>67.0</td>
+      <td>Moving violation</td>
+      <td>Moving violation summons issued</td>
+      <td>Substantiated (Charges)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>10007</td>
+      <td>John</td>
+      <td>Sears</td>
+      <td>078 PCT</td>
+      <td>5952</td>
+      <td>26146</td>
+      <td>7</td>
+      <td>2012</td>
+      <td>9</td>
+      <td>2013</td>
+      <td>...</td>
+      <td>25</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>45.0</td>
+      <td>Abuse of Authority</td>
+      <td>Question</td>
+      <td>67.0</td>
+      <td>PD suspected C/V of violation/crime - street</td>
+      <td>No arrest made or summons issued</td>
+      <td>Substantiated (Charges)</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>Robusta</td>
-      <td>katuka development trust ltd</td>
-      <td>Uganda</td>
-      <td>katikamu capca farmers association</td>
-      <td>NaN</td>
-      <td>katuka development trust</td>
-      <td>0</td>
-      <td>katuka development trust ltd</td>
-      <td>1200-1300</td>
-      <td>luwero central region</td>
+      <td>10009</td>
+      <td>Noemi</td>
+      <td>Sierra</td>
+      <td>078 PCT</td>
+      <td>24058</td>
+      <td>40253</td>
+      <td>8</td>
+      <td>2018</td>
+      <td>2</td>
+      <td>2019</td>
       <td>...</td>
-      <td>Green</td>
-      <td>3</td>
-      <td>June 26th, 2015</td>
-      <td>Uganda Coffee Development Authority</td>
-      <td>e36d0270932c3b657e96b7b0278dfd85dc0fe743</td>
-      <td>03077a1c6bac60e6f514691634a7f6eb5c85aae8</td>
-      <td>m</td>
-      <td>1200.0</td>
-      <td>1300.0</td>
-      <td>1250.0</td>
+      <td>39</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>16.0</td>
+      <td>Force</td>
+      <td>Physical force</td>
+      <td>67.0</td>
+      <td>Report-dispute</td>
+      <td>Arrest - other violation/crime</td>
+      <td>Substantiated (Command Discipline A)</td>
     </tr>
   </tbody>
 </table>
-<p>5 rows × 43 columns</p>
+<p>5 rows × 27 columns</p>
 </div>
 
 
 
-Both datasets have a final score as `Total Cup Points`. I can create a new column for a categorical feature that will grade the coffee based of the A-F scale. This scale will simply be the following:
-- A+: 97-100
-- A: 93-96
-- A-: 90-92
-- B+: 87-89
-- B: 83-86
-- B-: 80-82
-- C+: 77-79
-- C: 73-76
-- C-: 70-72
-- D+: 67-69
-- D: 63-66
-- D-: 60-62
-- F: 0-59
-
-We can then use this new categorical feature as our target, where a grade A coffee is the most desirable, and a grade F coffee is the least desirable. This column will be called `Total Cup Grade`.
+For the `CCRB Data Layout Table` we will need to import the individual sheets from the excel file.import os
 
 
 ```python
-# a function to create a list of conditions for our grading scale
-# takes an input dataframe and a variable name
-def grading_conditions(df_in, column_name):
+# get path of CCRB Data Layout Table.xlsx
+ccrb_path = os.path.join(path, "archive/", "CCRB Data Layout Table.xlsx")
+# excel file class to read in the xlsx file using path
+xl = pd.ExcelFile(ccrb_path)
+# get all the sheet names in the xlsx file
+sheet_names = xl.sheet_names
+sheet_names
+```
+
+
+
+
+    ['Layout', 'Rank Abbrevs', 'Command Abbrevs', 'FADO', 'Dispositions']
+
+
+
+
+```python
+# create an empty list of datafreames
+df_ccrb_list = [None] * len(sheet_names)
+# loop through all the sheet names
+for i in range(len(sheet_names)):
+    # create df from sheet name
+    df_temp = pd.read_excel(ccrb_path, sheet_names[i])
+    # add temporary df to the list
+    df_ccrb_list[i] = df_temp
+    print("Dataframe for sheet name", sheet_names[i], ":")
+    print()
+    print(df_ccrb_list[i].head())
+    print("*" * 100)
+```
+
+    Dataframe for sheet name Layout :
+    
+          field name                                      description   glossary
+    0  unique_mos_id  unique ID of the officer ("member of service")         NaN
+    1     first_name                             Officer's first name        NaN
+    2      last_name                              Officer's last name        NaN
+    3    command_now     Officer's command assignment as of July 2020  See Tab 3
+    4   complaint_id                       Unique ID of the complaint        NaN
+    ****************************************************************************************************
+    Dataframe for sheet name Rank Abbrevs :
+    
+      Abbreviation                               Rank
+    0          POM                     Police Officer
+    1          POF                     Police Officer
+    2           PO                     Police Officer
+    3          PSA  Police Officer Special Assignment
+    4          SGT                           Sergeant
+    ****************************************************************************************************
+    Dataframe for sheet name Command Abbrevs :
+    
+      Abbreviation               Command Name
+    0        C R C  Critical Response Command
+    1      WARRSEC            Warrant Section
+    2      075 PCT               075 Precinct
+    3       I.A.B.    Internal Affairs Bureau
+    4      046 PCT               046 Precinct
+    ****************************************************************************************************
+    Dataframe for sheet name FADO :
+    
+            FADO Category  Allegation type  Count of records
+    0  Offensive Language            Black                56
+    1  Offensive Language        Ethnicity                84
+    2  Offensive Language           Gender               115
+    3  Offensive Language  Gender Identity                 4
+    4  Offensive Language         Hispanic                 9
+    ****************************************************************************************************
+    Dataframe for sheet name Dispositions :
+    
+           Disposition                                        Description
+    0    Substantiated  The alleged conduct occurred and it violated t...
+    1       Exonerated  The alleged conduct occurred but did not viola...
+    2  Unsubstantiated  The CCRB has fully investigated but could not ...
+    ****************************************************************************************************
+
+
+The `CCRB Data Layout Table` is needed to explain some of the abbreviations and categories in `allegations_202007271729.csv`, which is why we have imported it. 
+
+## Creating data columns
+<a id = "create_col"></a>
+
+Now we're going to create a few new columns. One of these columns will be a full name. Another will be the full date the complaint was received and the full date the incident was closed.
+
+
+```python
+# empty list the length of the number of row in allegations
+full_name_all = [None] * len(df_allegations) 
+date_received = [None] * len(df_allegations)
+date_closed = [None] * len(df_allegations)
+for i in range(len(df_allegations)):
+    # combine first and last name
+    full_name_all[i] = df_allegations.first_name[i] + " " + df_allegations.last_name[i]
+    # combine year and month received
+    date_received[i] = str(df_allegations.year_received[i]) + "-" + str(df_allegations.month_received[i])
+    # combine year and month closed
+    date_closed[i] = str(df_allegations.year_closed[i]) + "-" + str(df_allegations.month_closed[i])
+# find column number of last name
+insert_loc_name = df_allegations.columns.get_loc("last_name")+1
+# insert full name after last name column
+df_allegations.insert(insert_loc_name, "full_name", full_name_all)
+# get location of year_received
+insert_loc_rec = df_allegations.columns.get_loc("year_received")+1
+# insert date_received after year_receive column
+df_allegations.insert(insert_loc_rec, "date_received", date_received)
+# get location of year_closed column
+insert_loc_close = df_allegations.columns.get_loc("year_closed")+1
+# insert date_closed after year_closed column
+df_allegations.insert(insert_loc_close, "date_closed", date_closed)
+df_allegations.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unique_mos_id</th>
+      <th>first_name</th>
+      <th>last_name</th>
+      <th>full_name</th>
+      <th>command_now</th>
+      <th>shield_no</th>
+      <th>complaint_id</th>
+      <th>month_received</th>
+      <th>year_received</th>
+      <th>date_received</th>
+      <th>...</th>
+      <th>mos_age_incident</th>
+      <th>complainant_ethnicity</th>
+      <th>complainant_gender</th>
+      <th>complainant_age_incident</th>
+      <th>fado_type</th>
+      <th>allegation</th>
+      <th>precinct</th>
+      <th>contact_reason</th>
+      <th>outcome_description</th>
+      <th>board_disposition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>10004</td>
+      <td>Jonathan</td>
+      <td>Ruiz</td>
+      <td>Jonathan Ruiz</td>
+      <td>078 PCT</td>
+      <td>8409</td>
+      <td>42835</td>
+      <td>7</td>
+      <td>2019</td>
+      <td>2019-7</td>
+      <td>...</td>
+      <td>32</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>38.0</td>
+      <td>Abuse of Authority</td>
+      <td>Failure to provide RTKA card</td>
+      <td>78.0</td>
+      <td>Report-domestic dispute</td>
+      <td>No arrest made or summons issued</td>
+      <td>Substantiated (Command Lvl Instructions)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>10007</td>
+      <td>John</td>
+      <td>Sears</td>
+      <td>John Sears</td>
+      <td>078 PCT</td>
+      <td>5952</td>
+      <td>24601</td>
+      <td>11</td>
+      <td>2011</td>
+      <td>2011-11</td>
+      <td>...</td>
+      <td>24</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>26.0</td>
+      <td>Discourtesy</td>
+      <td>Action</td>
+      <td>67.0</td>
+      <td>Moving violation</td>
+      <td>Moving violation summons issued</td>
+      <td>Substantiated (Charges)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>10007</td>
+      <td>John</td>
+      <td>Sears</td>
+      <td>John Sears</td>
+      <td>078 PCT</td>
+      <td>5952</td>
+      <td>24601</td>
+      <td>11</td>
+      <td>2011</td>
+      <td>2011-11</td>
+      <td>...</td>
+      <td>24</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>26.0</td>
+      <td>Offensive Language</td>
+      <td>Race</td>
+      <td>67.0</td>
+      <td>Moving violation</td>
+      <td>Moving violation summons issued</td>
+      <td>Substantiated (Charges)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>10007</td>
+      <td>John</td>
+      <td>Sears</td>
+      <td>John Sears</td>
+      <td>078 PCT</td>
+      <td>5952</td>
+      <td>26146</td>
+      <td>7</td>
+      <td>2012</td>
+      <td>2012-7</td>
+      <td>...</td>
+      <td>25</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>45.0</td>
+      <td>Abuse of Authority</td>
+      <td>Question</td>
+      <td>67.0</td>
+      <td>PD suspected C/V of violation/crime - street</td>
+      <td>No arrest made or summons issued</td>
+      <td>Substantiated (Charges)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>10009</td>
+      <td>Noemi</td>
+      <td>Sierra</td>
+      <td>Noemi Sierra</td>
+      <td>078 PCT</td>
+      <td>24058</td>
+      <td>40253</td>
+      <td>8</td>
+      <td>2018</td>
+      <td>2018-8</td>
+      <td>...</td>
+      <td>39</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>16.0</td>
+      <td>Force</td>
+      <td>Physical force</td>
+      <td>67.0</td>
+      <td>Report-dispute</td>
+      <td>Arrest - other violation/crime</td>
+      <td>Substantiated (Command Discipline A)</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 30 columns</p>
+</div>
+
+
+
+
+```python
+print("The smallest precinct number is", min(df_allegations.precinct))
+print("The largest precinct number is", max(df_allegations.precinct))
+```
+
+    The smallest precinct number is 0.0
+    The largest precinct number is 1000.0
+
+
+There is an odd case where a few of the offices have their precinct labelled as `1000` or `0`. There are only 77 police precincts in NYC. The highest number is the 123rd Precinct on Staten Island and the smallest number is the 1st Precinct in Manhattan. I'm going to remove row where `precinct == 1000` and `precinct == 0` because I am not sure which precinct this is supposed to be refering to (it could be an internal number being used to reference a specific entity within the NYPD structure). 
+
+
+```python
+# get rid of rows with the 1000
+df_allegations = df_allegations[df_allegations.precinct != 1000]
+df_allegations = df_allegations[df_allegations.precinct != 0]
+# get rid of rows with the 0
+print("The smallest precinct number is", min(df_allegations.precinct))
+print("The largest precinct number is", max(df_allegations.precinct))
+```
+
+    The smallest precinct number is 1.0
+    The largest precinct number is 123.0
+
+
+Now this makes sense! We see that by removing 1000 and 0 we are left with the 123rd Precinct and the 1st Precinct, which is what we expected in the first place.
+
+I'm going to make a new column for `borough`, which will represent the df.name.unique() in which the precinct of the complain was filed. 
+
+
+```python
+# look at the unique values 
+df_allegations.precinct.unique()
+```
+
+
+
+
+    array([ 78.,  67.,  79.,  77.,  81.,  73.,  90.,  75., 120.,  10.,  25.,
+           110.,  83.,  46.,   9.,  28.,   1.,  68.,  70.,  72., 122., 113.,
+           101., 100.,   7.,  13.,  71.,  23., 112.,  69.,  32.,  94.,  63.,
+            76.,  52.,  47.,  62.,  42.,  84., 115., 109.,   5.,  88.,  14.,
+           103., 107., 104.,  40., 108.,  50.,  45.,  18., 102., 114.,  19.,
+            20., 106., 105.,  17.,  60.,  34.,  44.,  48.,  41.,  43., 111.,
+            49.,  26.,  30.,  33.,   6.,  61., 123., 121.,  66.,  24.,  22.,
+            nan])
+
+
+
+
+```python
+def borough_conditions(df_in, column_name):
+    """
+    function to create a list of conditions for boroughs based on a number in precinct
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    column_name: feature name
+    
+    Returns
+    ----------
+    conditions: list of conditions via which we will create a new datacolumn based upon these results
+    """
     conditions = [
-    (df_in[column_name] <= 59), # grade F
-    (df_in[column_name] > 59) & (df_in[column_name] <= 62), # grade D-
-    (df_in[column_name] > 62) & (df_in[column_name] <= 66), # grade D
-    (df_in[column_name] > 66) & (df_in[column_name] <= 69), # grade D+
-    (df_in[column_name] > 69) & (df_in[column_name] <= 72), # grade C-
-    (df_in[column_name] > 72) & (df_in[column_name] <= 76), # grade C
-    (df_in[column_name] > 76) & (df_in[column_name] <= 79), # grade C+
-    (df_in[column_name] > 79) & (df_in[column_name] <= 82), # grade B-
-    (df_in[column_name] > 82) & (df_in[column_name] <= 86), # grade B
-    (df_in[column_name] > 86) & (df_in[column_name] <= 89), # grade B+
-    (df_in[column_name] > 89) & (df_in[column_name] <= 92), # grade A-
-    (df_in[column_name] > 92) & (df_in[column_name] <= 96), # grade A
-    (df_in[column_name] > 96) # grade A+
+        (df_in[column_name] <= 34), # Manhattan
+        (df_in[column_name] >= 40) & (df_in[column_name] <= 52), # Bronx
+        (df_in[column_name] >= 60) & (df_in[column_name] <= 94), # Brooklyn
+        (df_in[column_name] >= 100) & (df_in[column_name] <= 115), # Queens
+        (df_in[column_name] >= 120) & (df_in[column_name] <= 123) # Staten Island
     ]
     return conditions
 ```
 
 
 ```python
-# set the conditions for both arabica and robusta datasets
-cond_arabica = grading_conditions(df_arabica, "Total.Cup.Points")
-cond_robusta = grading_conditions(df_robusta, "Total.Cup.Points")
-```
+import numpy as np
 
-
-```python
-# create a list with the grades we will assign to each condition
-grades = ["F", "D-", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+"]
-
+# set the conditions
+cond_borough = borough_conditions(df_allegations, "precinct")
+# create a list with the boroughs we will assign to each condition
+borough_names = ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"]
+# get location of precinct column
+insert_loc_prec = df_allegations.columns.get_loc("precinct")+1
 # create a new column and use np.select to assign values to it using our lists as arguments
-df_arabica['Total.Cup.Grade'] = np.select(cond_arabica, grades)
-df_robusta['Total.Cup.Grade'] = np.select(cond_robusta, grades)
+df_allegations["borough"] = np.select(cond_borough, borough_names)
+# replace 0
+df_allegations["borough"] = df_allegations["borough"].replace({"0":np.nan, 0:np.nan})
+# look at uniques
+df_allegations.borough.unique()
 ```
 
 
-```python
-df_robusta['Total.Cup.Grade'].head()
-```
-
-
-
-
-    0    B
-    1    B
-    2    B
-    3    B
-    4    B
-    Name: Total.Cup.Grade, dtype: object
-
-
-
-Let's look to see if we can combine these two dataframes. To do so I will check the variables.
-
-
-```python
-# list of column names in arabica
-vars_arabica = list(df_arabica.columns)
-
-# list of column names in robusta
-vars_robusta = list(df_robusta.columns)
-
-# get a list of only the unique variables between the two datasets
-unique_vars = list( (set(vars_arabica) | set(vars_robusta)) - (set(vars_arabica) & set(vars_robusta)) )
-
-print("The unique variables are ", unique_vars)
-```
-
-    The unique variables are  ['Bitter...Sweet', 'Mouthfeel', 'Acidity', 'Salt...Acid', 'Sweetness', 'Fragrance...Aroma', 'Uniform.Cup', 'Body', 'Uniformity', 'Aroma']
-
-
-Unfortunately it seems we have a few different variables. If we look at the cupping scores from CQI we see the following:
-
-<div class="row">
-  <div class="column">
-    <img src="arabica_cupping_scores.png" alt="Arabica" style="width:45%">
-  </div>
-  <div class="column">
-    <img src="robusta_cupping_scores.png" alt="Robusta" style="width:45%">
-  </div>
-</div>
-
-For Arabica, on the left we have Aroma, Flavor, Aftertaste, Acidity, Body, Balance. On the right we have Uniformity, Clean Cup, Sweetness, Overall, Defects, Total Cup Points.
-For Robusta, on the left we have Fragrance / Aroma, Flavor, Aftertaste, Salt / Acid, Bitter / Sweet, Mouthfeel. On the right we have Uniform Cup, Clean Cup, Balance, Overall, Defects, Total Cup Points.
-
-This explains the difference between the variables in the two datasets. Because arabica has more data I will change the name of the robusta variables to match the arabica data.
-
-
-```python
-df_robusta.rename(columns={"Balance": "Sweetness", 'Mouthfeel': "Balance", 'Bitter...Sweet': "Body", "Fragrance...Aroma": "Aroma", 'Salt...Acid': "Acidity", "Uniform.Cup":'Uniformity'}, inplace=True)
-
-# list of column names in arabica
-vars_arabica = list(df_arabica.columns)
-
-# list of column names in robusta
-vars_robusta = list(df_robusta.columns)
-
-# get a list of only the unique variables between the two datasets
-unique_vars = list( (set(vars_arabica) | set(vars_robusta)) - (set(vars_arabica) & set(vars_robusta)) )
-
-print("The unique variables are ", unique_vars)
-```
-
-    The unique variables are  []
-
-
-Now I want to drop the irrelevant data columns. Those would be 'Number.of.Bags', 'Bag.Weight', 'Expiration', 'Certification.Body', 'Certification.Address', 'Certification.Contact', 'unit_of_measurement'. The altitude has the unit of measurement in the title (meters), and we do not need the certification of the reviewer nor the expiration date of the coffee. The Bag Weight and Number of Bags might be important to buyers but not to us.
-
-
-```python
-df_arabica = df_arabica.drop(['Number.of.Bags', 'Bag.Weight', 'Expiration', 'Certification.Body', 'Certification.Address', 'Certification.Contact', 'unit_of_measurement'], axis=1)
-df_robusta = df_robusta.drop(['Expiration', 'Certification.Body', 'Certification.Address', 'Certification.Contact', 'unit_of_measurement'], axis=1)
-df_robusta.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Species</th>
-      <th>Owner</th>
-      <th>Country.of.Origin</th>
-      <th>Farm.Name</th>
-      <th>Lot.Number</th>
-      <th>Mill</th>
-      <th>ICO.Number</th>
-      <th>Company</th>
-      <th>Altitude</th>
-      <th>Region</th>
-      <th>...</th>
-      <th>Total.Cup.Points</th>
-      <th>Moisture</th>
-      <th>Category.One.Defects</th>
-      <th>Quakers</th>
-      <th>Color</th>
-      <th>Category.Two.Defects</th>
-      <th>altitude_low_meters</th>
-      <th>altitude_high_meters</th>
-      <th>altitude_mean_meters</th>
-      <th>Total.Cup.Grade</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Robusta</td>
-      <td>ankole coffee producers coop</td>
-      <td>Uganda</td>
-      <td>kyangundu cooperative society</td>
-      <td>NaN</td>
-      <td>ankole coffee producers</td>
-      <td>0</td>
-      <td>ankole coffee producers coop</td>
-      <td>1488</td>
-      <td>sheema south western</td>
-      <td>...</td>
-      <td>83.75</td>
-      <td>0.12</td>
-      <td>0</td>
-      <td>0</td>
-      <td>Green</td>
-      <td>2</td>
-      <td>1488.0</td>
-      <td>1488.0</td>
-      <td>1488.0</td>
-      <td>B</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Robusta</td>
-      <td>nishant gurjer</td>
-      <td>India</td>
-      <td>sethuraman estate kaapi royale</td>
-      <td>25</td>
-      <td>sethuraman estate</td>
-      <td>14/1148/2017/21</td>
-      <td>kaapi royale</td>
-      <td>3170</td>
-      <td>chikmagalur karnataka indua</td>
-      <td>...</td>
-      <td>83.50</td>
-      <td>0.00</td>
-      <td>0</td>
-      <td>0</td>
-      <td>NaN</td>
-      <td>2</td>
-      <td>3170.0</td>
-      <td>3170.0</td>
-      <td>3170.0</td>
-      <td>B</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Robusta</td>
-      <td>andrew hetzel</td>
-      <td>India</td>
-      <td>sethuraman estate</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>0000</td>
-      <td>sethuraman estate</td>
-      <td>1000m</td>
-      <td>chikmagalur</td>
-      <td>...</td>
-      <td>83.25</td>
-      <td>0.00</td>
-      <td>0</td>
-      <td>0</td>
-      <td>Green</td>
-      <td>0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-      <td>B</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>Robusta</td>
-      <td>ugacof</td>
-      <td>Uganda</td>
-      <td>ugacof project area</td>
-      <td>NaN</td>
-      <td>ugacof</td>
-      <td>0</td>
-      <td>ugacof ltd</td>
-      <td>1212</td>
-      <td>central</td>
-      <td>...</td>
-      <td>83.00</td>
-      <td>0.12</td>
-      <td>0</td>
-      <td>0</td>
-      <td>Green</td>
-      <td>7</td>
-      <td>1212.0</td>
-      <td>1212.0</td>
-      <td>1212.0</td>
-      <td>B</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Robusta</td>
-      <td>katuka development trust ltd</td>
-      <td>Uganda</td>
-      <td>katikamu capca farmers association</td>
-      <td>NaN</td>
-      <td>katuka development trust</td>
-      <td>0</td>
-      <td>katuka development trust ltd</td>
-      <td>1200-1300</td>
-      <td>luwero central region</td>
-      <td>...</td>
-      <td>83.00</td>
-      <td>0.12</td>
-      <td>0</td>
-      <td>0</td>
-      <td>Green</td>
-      <td>3</td>
-      <td>1200.0</td>
-      <td>1300.0</td>
-      <td>1250.0</td>
-      <td>B</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 39 columns</p>
-</div>
-
-
-
-Let's check for duplicates.
-
-
-```python
-# Total number of rows and columns
-df_arabica.shape
-```
-
-
-
-
-    (1311, 37)
-
-
-
-
-```python
-# Total number of rows and columns
-df_robusta.shape
-```
-
-
-
-
-    (28, 39)
-
-
-
-
-```python
-# Rows containing duplicate data
-duplicate_rows_df = df_arabica[df_arabica.duplicated()]
-print("number of arabica duplicate rows: ", duplicate_rows_df.shape)
-
-# Rows containing duplicate data
-duplicate_rows_df = df_robusta[df_robusta.duplicated()]
-print("number of robusta duplicate rows: ", duplicate_rows_df.shape)
-```
-
-    number of arabica duplicate rows:  (0, 37)
-    number of robusta duplicate rows:  (0, 39)
-
-
-There are no duplicates that we have to worry about!
-
-Okay, now we have fixed the issue in variables. We can combine the two datasets.
-
-
-```python
-df_combined = pd.concat([df_arabica, df_robusta], axis=0, join='inner')
-df_combined.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Species</th>
-      <th>Owner</th>
-      <th>Country.of.Origin</th>
-      <th>Farm.Name</th>
-      <th>Lot.Number</th>
-      <th>Mill</th>
-      <th>ICO.Number</th>
-      <th>Company</th>
-      <th>Altitude</th>
-      <th>Region</th>
-      <th>...</th>
-      <th>Total.Cup.Points</th>
-      <th>Moisture</th>
-      <th>Category.One.Defects</th>
-      <th>Quakers</th>
-      <th>Color</th>
-      <th>Category.Two.Defects</th>
-      <th>altitude_low_meters</th>
-      <th>altitude_high_meters</th>
-      <th>altitude_mean_meters</th>
-      <th>Total.Cup.Grade</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>Ethiopia</td>
-      <td>metad plc</td>
-      <td>NaN</td>
-      <td>metad plc</td>
-      <td>2014/2015</td>
-      <td>metad agricultural developmet plc</td>
-      <td>1950-2200</td>
-      <td>guji-hambela</td>
-      <td>...</td>
-      <td>90.58</td>
-      <td>0.12</td>
-      <td>0</td>
-      <td>0.0</td>
-      <td>Green</td>
-      <td>0</td>
-      <td>1950.0</td>
-      <td>2200.0</td>
-      <td>2075.0</td>
-      <td>A-</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>Ethiopia</td>
-      <td>metad plc</td>
-      <td>NaN</td>
-      <td>metad plc</td>
-      <td>2014/2015</td>
-      <td>metad agricultural developmet plc</td>
-      <td>1950-2200</td>
-      <td>guji-hambela</td>
-      <td>...</td>
-      <td>89.92</td>
-      <td>0.12</td>
-      <td>0</td>
-      <td>0.0</td>
-      <td>Green</td>
-      <td>1</td>
-      <td>1950.0</td>
-      <td>2200.0</td>
-      <td>2075.0</td>
-      <td>A-</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Arabica</td>
-      <td>grounds for health admin</td>
-      <td>Guatemala</td>
-      <td>san marcos barrancas "san cristobal cuch</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>1600 - 1800 m</td>
-      <td>NaN</td>
-      <td>...</td>
-      <td>89.75</td>
-      <td>0.00</td>
-      <td>0</td>
-      <td>0.0</td>
-      <td>NaN</td>
-      <td>0</td>
-      <td>1600.0</td>
-      <td>1800.0</td>
-      <td>1700.0</td>
-      <td>A-</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>Arabica</td>
-      <td>yidnekachew dabessa</td>
-      <td>Ethiopia</td>
-      <td>yidnekachew dabessa coffee plantation</td>
-      <td>NaN</td>
-      <td>wolensu</td>
-      <td>NaN</td>
-      <td>yidnekachew debessa coffee plantation</td>
-      <td>1800-2200</td>
-      <td>oromia</td>
-      <td>...</td>
-      <td>89.00</td>
-      <td>0.11</td>
-      <td>0</td>
-      <td>0.0</td>
-      <td>Green</td>
-      <td>2</td>
-      <td>1800.0</td>
-      <td>2200.0</td>
-      <td>2000.0</td>
-      <td>B+</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>Ethiopia</td>
-      <td>metad plc</td>
-      <td>NaN</td>
-      <td>metad plc</td>
-      <td>2014/2015</td>
-      <td>metad agricultural developmet plc</td>
-      <td>1950-2200</td>
-      <td>guji-hambela</td>
-      <td>...</td>
-      <td>88.83</td>
-      <td>0.12</td>
-      <td>0</td>
-      <td>0.0</td>
-      <td>Green</td>
-      <td>2</td>
-      <td>1950.0</td>
-      <td>2200.0</td>
-      <td>2075.0</td>
-      <td>B+</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 37 columns</p>
-</div>
-
-
-
-Let us check null values.
-
-
-```python
-# Finding the null values.
-print(df_combined.isnull().sum())
-```
-
-    Species                    0
-    Owner                      7
-    Country.of.Origin          1
-    Farm.Name                359
-    Lot.Number              1063
-    Mill                     318
-    ICO.Number               157
-    Company                  209
-    Altitude                 226
-    Region                    59
-    Producer                 232
-    In.Country.Partner         0
-    Harvest.Year              47
-    Grading.Date               0
-    Owner.1                    7
-    Variety                  226
-    Processing.Method        170
-    Aroma                      0
-    Flavor                     0
-    Aftertaste                 0
-    Acidity                    0
-    Body                       0
-    Balance                    0
-    Uniformity                 0
-    Clean.Cup                  0
-    Sweetness                  0
-    Cupper.Points              0
-    Total.Cup.Points           0
-    Moisture                   0
-    Category.One.Defects       0
-    Quakers                    1
-    Color                    218
-    Category.Two.Defects       0
-    altitude_low_meters      230
-    altitude_high_meters     230
-    altitude_mean_meters     230
-    Total.Cup.Grade            0
-    dtype: int64
-
-
-I will drop all columns with an excessive number of missing variables. For the columns with only a handful of missing variables I will remove those rows.
-
-
-```python
-#df_combined = df_combined.drop(['Farm.Name', "Lot.Number"], axis=1)
-print("Dimensions of original data:", df_combined.shape)
-df_combined_cleaned = df_combined.drop(['Farm.Name', "Lot.Number", "Mill", "ICO.Number", "Company", "Altitude", "Producer", "Variety", "Processing.Method", "Color", "altitude_low_meters", "altitude_high_meters", "altitude_mean_meters"], axis=1)
-df_combined_cleaned = df_combined_cleaned.dropna(axis=0)
-print("Dimensions of modified data:", df_combined_cleaned.shape)
-# should no longer have any null values
-print("Number of null values:", df_combined_cleaned.isnull().sum())
-```
-
-    Dimensions of original data: (1339, 37)
-    Dimensions of modified data: (1243, 24)
-    Number of null values: Species                 0
-    Owner                   0
-    Country.of.Origin       0
-    Region                  0
-    In.Country.Partner      0
-    Harvest.Year            0
-    Grading.Date            0
-    Owner.1                 0
-    Aroma                   0
-    Flavor                  0
-    Aftertaste              0
-    Acidity                 0
-    Body                    0
-    Balance                 0
-    Uniformity              0
-    Clean.Cup               0
-    Sweetness               0
-    Cupper.Points           0
-    Total.Cup.Points        0
-    Moisture                0
-    Category.One.Defects    0
-    Quakers                 0
-    Category.Two.Defects    0
-    Total.Cup.Grade         0
-    dtype: int64
-
-
-We need to clean the datetime variables.
-
-
-```python
-df_combined_cleaned["HarvestYear"] = df_combined_cleaned["Harvest.Year"]
-df_combined_cleaned.HarvestYear.unique()
-```
-
-
-
-
-    array(['2014', 'March 2010', 'Sept 2009 - April 2010', 'May-August',
-           '2009/2010', '2015', '2012', '2013', '2011', '2016', '2015/2016',
-           '2010', 'Fall 2009', '2017', '2009 / 2010', '2010-2011',
-           '2009 - 2010', '2013/2014', '2017 / 2018', 'mmm', 'TEST',
-           'December 2009-March 2010', '2014/2015', '2011/2012',
-           'January 2011', '4T/10', '23 July 2010', 'January Through April',
-           '1T/2011', '4t/2010', '4T/2010', 'August to December',
-           'Mayo a Julio', '47/2010', 'Abril - Julio', '4t/2011', '2009-2010',
-           'Abril - Julio /2011', 'Spring 2011 in Colombia.', '2016 / 2017',
-           '3T/2011', '1t/2011', '2018', '4T72010', '08/09 crop', 2013, 2017,
-           2015, 2012, 2014, 2016], dtype=object)
-
-
-
-
-```python
-df_combined_cleaned["GradingDate"] = df_combined_cleaned["Grading.Date"]
-df_combined_cleaned.GradingDate.unique()[0:10]
-```
-
-
-
-
-    array(['April 4th, 2015', 'March 26th, 2015', 'September 2nd, 2010',
-           'March 30th, 2015', 'March 27th, 2015', 'March 13th, 2015',
-           'May 31st, 2010', 'August 31st, 2010', 'June 16th, 2010',
-           'April 7th, 2016'], dtype=object)
-
-
-
-I need to drop the HarvestYear variable, it's fairly useless because of how many different options there are, and no standardization. I can convert GradingDate to a date time variable, however.
-
-
-```python
-#rename everything with a period, inconvenient column names
-df_combined_cleaned["CountryOrigin"] = df_combined_cleaned["Country.of.Origin"]
-df_combined_cleaned["InCountryPartner"] = df_combined_cleaned["In.Country.Partner"]
-df_combined_cleaned["Owner1"] = df_combined_cleaned["Owner.1"]
-df_combined_cleaned["CleanCup"] = df_combined_cleaned["Clean.Cup"]
-df_combined_cleaned["CupperPoints"] = df_combined_cleaned["Cupper.Points"]
-df_combined_cleaned["TotCupPts"] = df_combined_cleaned["Total.Cup.Points"]
-df_combined_cleaned["Cat1Defects"] = df_combined_cleaned["Category.One.Defects"]
-df_combined_cleaned["Cat2Defects"] = df_combined_cleaned["Category.Two.Defects"]
-df_combined_cleaned["TotCupGrade"] = df_combined_cleaned["Total.Cup.Grade"]
-# drop harvest year
-df_combined_cleaned = df_combined_cleaned.drop(["Cupper.Points", "Total.Cup.Grade", "Category.Two.Defects", "Category.One.Defects", "Total.Cup.Points", "Clean.Cup", "Owner.1", "In.Country.Partner", "HarvestYear", "Harvest.Year", "Grading.Date", "Country.of.Origin"], axis=1)
-# convert grading date to datetime variable
-df_combined_cleaned['GradingDate']= pd.to_datetime(df_combined_cleaned['GradingDate'])
-```
-
-I need to look at some of the categorical variables. If they have an incredible amount of diversity in responses, these categorical variables may not be useful to me further on.
-
-
-```python
-# dataframe of only objects
-df_objects = df_combined_cleaned.select_dtypes(include='object')
-df_objects.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Species</th>
-      <th>Owner</th>
-      <th>Region</th>
-      <th>CountryOrigin</th>
-      <th>InCountryPartner</th>
-      <th>Owner1</th>
-      <th>TotCupGrade</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>guji-hambela</td>
-      <td>Ethiopia</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>metad plc</td>
-      <td>A-</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>guji-hambela</td>
-      <td>Ethiopia</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>metad plc</td>
-      <td>A-</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>Arabica</td>
-      <td>yidnekachew dabessa</td>
-      <td>oromia</td>
-      <td>Ethiopia</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>Yidnekachew Dabessa</td>
-      <td>B+</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Arabica</td>
-      <td>metad plc</td>
-      <td>guji-hambela</td>
-      <td>Ethiopia</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>metad plc</td>
-      <td>B+</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>Arabica</td>
-      <td>ethiopia commodity exchange</td>
-      <td>oromia</td>
-      <td>Ethiopia</td>
-      <td>Ethiopia Commodity Exchange</td>
-      <td>Ethiopia Commodity Exchange</td>
-      <td>B+</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-```python
-df_objects.nunique()
-```
-
-
-
-
-    Species               2
-    Owner               302
-    Region              351
-    CountryOrigin        35
-    InCountryPartner     26
-    Owner1              305
-    TotCupGrade          11
-    dtype: int64
-
-
-
-`Owner`, `Owner1`, and `Region` are pretty useless to us, due to how much variation in the results there are. We can't sort through all these unique values. We need to get rid of them.
-
-
-```python
-df_combined_cleaned = df_combined_cleaned.drop(["Owner", "Owner1", "Region"], axis=1)
-```
-
-I would also like to standardize the country names using the ISO3 standards. I'm going to clean up the countries.
-
-
-```python
-def country_flag(df_combined_cleaned):
-    list_name = [i.name for i in list(pycountry.countries)]
-    if (df_combined_cleaned["CountryOrigin"] in list_name):
-        return pycountry.countries.get(name = df_combined_cleaned["CountryOrigin"]).alpha_3
-    elif (df_combined_cleaned["CountryOrigin"] == 'United States (Hawaii)'):
-        return "USA"
-    elif (df_combined_cleaned["CountryOrigin"] == 'United States (Puerto Rico)'):
-        return "USA"
-    elif (df_combined_cleaned["CountryOrigin"] == 'Tanzania, United Republic Of'):
-        return "TZA"
-    elif (df_combined_cleaned["CountryOrigin"] == 'Cote d?Ivoire'):
-        return "CIV"
-    elif (df_combined_cleaned["CountryOrigin"] == 'Taiwan'):
-        return "TWN"
-    elif (df_combined_cleaned["CountryOrigin"] == 'Vietnam'):
-        return "VNM"
-    elif (df_combined_cleaned["CountryOrigin"] == 'Laos'):
-        return "LAO"
-    else:
-        return 'Invalid Code'
-
-df_combined_cleaned['CountryISO3'] = df_combined_cleaned.apply(country_flag, axis = 1)
-df_combined_cleaned['CountryISO3']
-df_combined_cleaned.CountryISO3.unique()
-```
-
-
-
-
-    array(['ETH', 'USA', 'IDN', 'CHN', 'CRI', 'MEX', 'BRA', 'UGA', 'HND',
-           'TWN', 'KEN', 'THA', 'COL', 'GTM', 'PAN', 'PER', 'PNG', 'SLV',
-           'TZA', 'NIC', 'ECU', 'HTI', 'BDI', 'VNM', 'PHL', 'RWA', 'MWI',
-           'LAO', 'ZMB', 'MMR', 'MUS', 'CIV', 'IND'], dtype=object)
-
-
-
-
-```python
-df_combined_cleaned = df_combined_cleaned.drop(["CountryOrigin"], axis=1)
-df_combined_cleaned = df_combined_cleaned.reindex(sorted(df_combined_cleaned.columns), axis=1)
-df_combined_cleaned.info()
-```
-
-    <class 'pandas.core.frame.DataFrame'>
-    Int64Index: 1243 entries, 0 to 25
-    Data columns (total 20 columns):
-     #   Column            Non-Null Count  Dtype
-    ---  ------            --------------  -----
-     0   Acidity           1243 non-null   float64
-     1   Aftertaste        1243 non-null   float64
-     2   Aroma             1243 non-null   float64
-     3   Balance           1243 non-null   float64
-     4   Body              1243 non-null   float64
-     5   Cat1Defects       1243 non-null   int64
-     6   Cat2Defects       1243 non-null   int64
-     7   CleanCup          1243 non-null   float64
-     8   CountryISO3       1243 non-null   object
-     9   CupperPoints      1243 non-null   float64
-     10  Flavor            1243 non-null   float64
-     11  GradingDate       1243 non-null   datetime64[ns]
-     12  InCountryPartner  1243 non-null   object
-     13  Moisture          1243 non-null   float64
-     14  Quakers           1243 non-null   float64
-     15  Species           1243 non-null   object
-     16  Sweetness         1243 non-null   float64
-     17  TotCupGrade       1243 non-null   object
-     18  TotCupPts         1243 non-null   float64
-     19  Uniformity        1243 non-null   float64
-    dtypes: datetime64[ns](1), float64(13), int64(2), object(4)
-    memory usage: 203.9+ KB
-
-
-
-```python
-df_combined_cleaned.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Acidity</th>
-      <th>Aftertaste</th>
-      <th>Aroma</th>
-      <th>Balance</th>
-      <th>Body</th>
-      <th>Cat1Defects</th>
-      <th>Cat2Defects</th>
-      <th>CleanCup</th>
-      <th>CountryISO3</th>
-      <th>CupperPoints</th>
-      <th>Flavor</th>
-      <th>GradingDate</th>
-      <th>InCountryPartner</th>
-      <th>Moisture</th>
-      <th>Quakers</th>
-      <th>Species</th>
-      <th>Sweetness</th>
-      <th>TotCupGrade</th>
-      <th>TotCupPts</th>
-      <th>Uniformity</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>8.75</td>
-      <td>8.67</td>
-      <td>8.67</td>
-      <td>8.42</td>
-      <td>8.50</td>
-      <td>0</td>
-      <td>0</td>
-      <td>10.0</td>
-      <td>ETH</td>
-      <td>8.75</td>
-      <td>8.83</td>
-      <td>2015-04-04</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>0.12</td>
-      <td>0.0</td>
-      <td>Arabica</td>
-      <td>10.00</td>
-      <td>A-</td>
-      <td>90.58</td>
-      <td>10.0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>8.58</td>
-      <td>8.50</td>
-      <td>8.75</td>
-      <td>8.42</td>
-      <td>8.42</td>
-      <td>0</td>
-      <td>1</td>
-      <td>10.0</td>
-      <td>ETH</td>
-      <td>8.58</td>
-      <td>8.67</td>
-      <td>2015-04-04</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>0.12</td>
-      <td>0.0</td>
-      <td>Arabica</td>
-      <td>10.00</td>
-      <td>A-</td>
-      <td>89.92</td>
-      <td>10.0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>8.42</td>
-      <td>8.42</td>
-      <td>8.17</td>
-      <td>8.25</td>
-      <td>8.50</td>
-      <td>0</td>
-      <td>2</td>
-      <td>10.0</td>
-      <td>ETH</td>
-      <td>8.67</td>
-      <td>8.58</td>
-      <td>2015-03-26</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>0.11</td>
-      <td>0.0</td>
-      <td>Arabica</td>
-      <td>10.00</td>
-      <td>B+</td>
-      <td>89.00</td>
-      <td>10.0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>8.50</td>
-      <td>8.25</td>
-      <td>8.25</td>
-      <td>8.33</td>
-      <td>8.42</td>
-      <td>0</td>
-      <td>2</td>
-      <td>10.0</td>
-      <td>ETH</td>
-      <td>8.58</td>
-      <td>8.50</td>
-      <td>2015-04-04</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>0.12</td>
-      <td>0.0</td>
-      <td>Arabica</td>
-      <td>10.00</td>
-      <td>B+</td>
-      <td>88.83</td>
-      <td>10.0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>8.42</td>
-      <td>8.50</td>
-      <td>8.25</td>
-      <td>8.50</td>
-      <td>8.33</td>
-      <td>0</td>
-      <td>0</td>
-      <td>10.0</td>
-      <td>ETH</td>
-      <td>9.00</td>
-      <td>8.33</td>
-      <td>2010-09-02</td>
-      <td>Ethiopia Commodity Exchange</td>
-      <td>0.03</td>
-      <td>0.0</td>
-      <td>Arabica</td>
-      <td>9.33</td>
-      <td>B+</td>
-      <td>88.67</td>
-      <td>10.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-# Part 2: EDA
-
-<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/eda.md" target="_blank">Analysis code here.</a>
-
-First let's see if the previous conditions worked by looking at the grades.
-
-
-```python
-# plot side by side
-fig, ax = plt.subplots(1,2, sharey = False, figsize=(15,5))
-
-# create a histogram of grades for arabica coffee
-plot_arabica_grades = sns.histplot(
-    data = df_arabica,
-    x = "Total.Cup.Grade",
-    hue = "Total.Cup.Grade",
-    ax = ax[0],
-    stat = "probability"
-)
-
-# create a histogram of grades for robusta coffee
-plot_robusta_grades = sns.histplot(
-    data = df_robusta,
-    x = "Total.Cup.Grade",
-    hue = "Total.Cup.Grade",
-    ax = ax[1],
-    stat = "probability"
-)
-
-# set plot labels
-plot_arabica_grades.set(
-    title = "Histogram of the grades\nfor Arabica Coffee",
-    xlabel = "Grades"
-)
-plot_robusta_grades.set(
-    title = "Histogram of the grades\nfor Robusta Coffee",
-    xlabel = "Grades"
-)
-
-# show the plot
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_44_0.png)
-
-
-
-It seems that robusta coffee only got a grade of B or C, with 80% of the robusta coffe getting a B/B-. For the arabica coffee we have all possible grades A-F, but B grade (B+, B, B-) is roughly ~85% of the data. This means that most coffee is pretty good but not great, and if you want a good cup of coffee then you'll need to get an arabica coffee. Arabica coffee are the only ones to get A-/B+ grades. But we'll have to look further.
-
-I'm going to look at the categorical variable of the country of origin.
-
-
-```python
-sns.set_context("talk", font_scale = 1)
-
-figure(num=None, figsize=(12, 10), dpi=80, facecolor='w', edgecolor='k')
-
-# create a histogram of grades for arabica coffee
-plot_country = sns.histplot(
-    data = df_combined_cleaned,
-    y = "CountryISO3",
-    hue = "CountryISO3",
-    stat = "probability",
-    legend = False
-)
-
-# set plot labels
-plot_country.set(
-    title = "Histogram of the countries from where the coffee originates",
-    ylabel = "Country (ISO3 Codes)"
-)
-
-# rotate the x axis tick marks
-#plot_country.axes.set_xticklabels(
-#        plot_country.axes.get_xticklabels(),
-#        rotation = 90
-#    )
-
-# show the plot
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_46_0.png)
-
-
-
-
-```python
-# correlation matrix
-plt.figure(figsize=(20,10))
-c = df_combined_cleaned.corr()
-sns.heatmap(c, cmap="Spectral", annot=True)
-c
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Acidity</th>
-      <th>Aftertaste</th>
-      <th>Aroma</th>
-      <th>Balance</th>
-      <th>Body</th>
-      <th>Cat1Defects</th>
-      <th>Cat2Defects</th>
-      <th>CleanCup</th>
-      <th>CupperPoints</th>
-      <th>Flavor</th>
-      <th>Moisture</th>
-      <th>Quakers</th>
-      <th>Sweetness</th>
-      <th>TotCupPts</th>
-      <th>Uniformity</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>Acidity</th>
-      <td>1.000000</td>
-      <td>0.793344</td>
-      <td>0.727770</td>
-      <td>0.724988</td>
-      <td>0.742785</td>
-      <td>-0.062547</td>
-      <td>-0.137391</td>
-      <td>0.310594</td>
-      <td>0.740274</td>
-      <td>0.822946</td>
-      <td>-0.122896</td>
-      <td>-0.016868</td>
-      <td>0.259232</td>
-      <td>0.802984</td>
-      <td>0.396396</td>
-    </tr>
-    <tr>
-      <th>Aftertaste</th>
-      <td>0.793344</td>
-      <td>1.000000</td>
-      <td>0.779840</td>
-      <td>0.801405</td>
-      <td>0.763181</td>
-      <td>-0.081281</td>
-      <td>-0.216709</td>
-      <td>0.402529</td>
-      <td>0.825058</td>
-      <td>0.896447</td>
-      <td>-0.173758</td>
-      <td>0.001080</td>
-      <td>0.265616</td>
-      <td>0.867210</td>
-      <td>0.430874</td>
-    </tr>
-    <tr>
-      <th>Aroma</th>
-      <td>0.727770</td>
-      <td>0.779840</td>
-      <td>1.000000</td>
-      <td>0.704957</td>
-      <td>0.703961</td>
-      <td>-0.079338</td>
-      <td>-0.158682</td>
-      <td>0.349522</td>
-      <td>0.723425</td>
-      <td>0.818745</td>
-      <td>-0.126047</td>
-      <td>0.006357</td>
-      <td>0.261949</td>
-      <td>0.800627</td>
-      <td>0.391390</td>
-    </tr>
-    <tr>
-      <th>Balance</th>
-      <td>0.724988</td>
-      <td>0.801405</td>
-      <td>0.704957</td>
-      <td>1.000000</td>
-      <td>0.734520</td>
-      <td>-0.061105</td>
-      <td>-0.170645</td>
-      <td>0.373552</td>
-      <td>0.747807</td>
-      <td>0.784476</td>
-      <td>-0.186317</td>
-      <td>0.013447</td>
-      <td>0.309706</td>
-      <td>0.826063</td>
-      <td>0.415083</td>
-    </tr>
-    <tr>
-      <th>Body</th>
-      <td>0.742785</td>
-      <td>0.763181</td>
-      <td>0.703961</td>
-      <td>0.734520</td>
-      <td>1.000000</td>
-      <td>-0.021391</td>
-      <td>-0.099822</td>
-      <td>0.297834</td>
-      <td>0.716201</td>
-      <td>0.765929</td>
-      <td>-0.178478</td>
-      <td>-0.008426</td>
-      <td>0.242451</td>
-      <td>0.775655</td>
-      <td>0.360084</td>
-    </tr>
-    <tr>
-      <th>Cat1Defects</th>
-      <td>-0.062547</td>
-      <td>-0.081281</td>
-      <td>-0.079338</td>
-      <td>-0.061105</td>
-      <td>-0.021391</td>
-      <td>1.000000</td>
-      <td>0.359069</td>
-      <td>-0.142758</td>
-      <td>-0.053130</td>
-      <td>-0.059526</td>
-      <td>0.057624</td>
-      <td>-0.003466</td>
-      <td>-0.039930</td>
-      <td>-0.106256</td>
-      <td>-0.117008</td>
-    </tr>
-    <tr>
-      <th>Cat2Defects</th>
-      <td>-0.137391</td>
-      <td>-0.216709</td>
-      <td>-0.158682</td>
-      <td>-0.170645</td>
-      <td>-0.099822</td>
-      <td>0.359069</td>
-      <td>1.000000</td>
-      <td>-0.233876</td>
-      <td>-0.189402</td>
-      <td>-0.195007</td>
-      <td>0.148900</td>
-      <td>0.021026</td>
-      <td>-0.010961</td>
-      <td>-0.210043</td>
-      <td>-0.143487</td>
-    </tr>
-    <tr>
-      <th>CleanCup</th>
-      <td>0.310594</td>
-      <td>0.402529</td>
-      <td>0.349522</td>
-      <td>0.373552</td>
-      <td>0.297834</td>
-      <td>-0.142758</td>
-      <td>-0.233876</td>
-      <td>1.000000</td>
-      <td>0.375545</td>
-      <td>0.406394</td>
-      <td>-0.022666</td>
-      <td>0.022599</td>
-      <td>0.425608</td>
-      <td>0.661929</td>
-      <td>0.517351</td>
-    </tr>
-    <tr>
-      <th>CupperPoints</th>
-      <td>0.740274</td>
-      <td>0.825058</td>
-      <td>0.723425</td>
-      <td>0.747807</td>
-      <td>0.716201</td>
-      <td>-0.053130</td>
-      <td>-0.189402</td>
-      <td>0.375545</td>
-      <td>1.000000</td>
-      <td>0.825150</td>
-      <td>-0.197484</td>
-      <td>0.013542</td>
-      <td>0.219767</td>
-      <td>0.817928</td>
-      <td>0.386805</td>
-    </tr>
-    <tr>
-      <th>Flavor</th>
-      <td>0.822946</td>
-      <td>0.896447</td>
-      <td>0.818745</td>
-      <td>0.784476</td>
-      <td>0.765929</td>
-      <td>-0.059526</td>
-      <td>-0.195007</td>
-      <td>0.406394</td>
-      <td>0.825150</td>
-      <td>1.000000</td>
-      <td>-0.142875</td>
-      <td>0.005724</td>
-      <td>0.288754</td>
-      <td>0.877383</td>
-      <td>0.429437</td>
-    </tr>
-    <tr>
-      <th>Moisture</th>
-      <td>-0.122896</td>
-      <td>-0.173758</td>
-      <td>-0.126047</td>
-      <td>-0.186317</td>
-      <td>-0.178478</td>
-      <td>0.057624</td>
-      <td>0.148900</td>
-      <td>-0.022666</td>
-      <td>-0.197484</td>
-      <td>-0.142875</td>
-      <td>1.000000</td>
-      <td>-0.048538</td>
-      <td>0.078123</td>
-      <td>-0.120556</td>
-      <td>-0.005425</td>
-    </tr>
-    <tr>
-      <th>Quakers</th>
-      <td>-0.016868</td>
-      <td>0.001080</td>
-      <td>0.006357</td>
-      <td>0.013447</td>
-      <td>-0.008426</td>
-      <td>-0.003466</td>
-      <td>0.021026</td>
-      <td>0.022599</td>
-      <td>0.013542</td>
-      <td>0.005724</td>
-      <td>-0.048538</td>
-      <td>1.000000</td>
-      <td>0.004533</td>
-      <td>0.011390</td>
-      <td>0.022671</td>
-    </tr>
-    <tr>
-      <th>Sweetness</th>
-      <td>0.259232</td>
-      <td>0.265616</td>
-      <td>0.261949</td>
-      <td>0.309706</td>
-      <td>0.242451</td>
-      <td>-0.039930</td>
-      <td>-0.010961</td>
-      <td>0.425608</td>
-      <td>0.219767</td>
-      <td>0.288754</td>
-      <td>0.078123</td>
-      <td>0.004533</td>
-      <td>1.000000</td>
-      <td>0.546976</td>
-      <td>0.428832</td>
-    </tr>
-    <tr>
-      <th>TotCupPts</th>
-      <td>0.802984</td>
-      <td>0.867210</td>
-      <td>0.800627</td>
-      <td>0.826063</td>
-      <td>0.775655</td>
-      <td>-0.106256</td>
-      <td>-0.210043</td>
-      <td>0.661929</td>
-      <td>0.817928</td>
-      <td>0.877383</td>
-      <td>-0.120556</td>
-      <td>0.011390</td>
-      <td>0.546976</td>
-      <td>1.000000</td>
-      <td>0.665193</td>
-    </tr>
-    <tr>
-      <th>Uniformity</th>
-      <td>0.396396</td>
-      <td>0.430874</td>
-      <td>0.391390</td>
-      <td>0.415083</td>
-      <td>0.360084</td>
-      <td>-0.117008</td>
-      <td>-0.143487</td>
-      <td>0.517351</td>
-      <td>0.386805</td>
-      <td>0.429437</td>
-      <td>-0.005425</td>
-      <td>0.022671</td>
-      <td>0.428832</td>
-      <td>0.665193</td>
-      <td>1.000000</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-
-![png](code_output_files/code_output_47_1.png)
-
-
-
-We can see that the values for `Quakers` and `altitude` are not overly much correlated with any other variables. These will most likely not help with our model. It seems that the highly correlated values are all the variables for the taste aspects of the coffee.
-
-
-```python
-df_combined_cleaned.describe()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Acidity</th>
-      <th>Aftertaste</th>
-      <th>Aroma</th>
-      <th>Balance</th>
-      <th>Body</th>
-      <th>Cat1Defects</th>
-      <th>Cat2Defects</th>
-      <th>CleanCup</th>
-      <th>CupperPoints</th>
-      <th>Flavor</th>
-      <th>Moisture</th>
-      <th>Quakers</th>
-      <th>Sweetness</th>
-      <th>TotCupPts</th>
-      <th>Uniformity</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>count</th>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-      <td>1243.000000</td>
-    </tr>
-    <tr>
-      <th>mean</th>
-      <td>7.535382</td>
-      <td>7.396516</td>
-      <td>7.565953</td>
-      <td>7.513073</td>
-      <td>7.517289</td>
-      <td>0.409493</td>
-      <td>3.616251</td>
-      <td>9.836331</td>
-      <td>7.492285</td>
-      <td>7.518608</td>
-      <td>0.089759</td>
-      <td>0.169751</td>
-      <td>9.856710</td>
-      <td>82.070024</td>
-      <td>9.837691</td>
-    </tr>
-    <tr>
-      <th>std</th>
-      <td>0.382273</td>
-      <td>0.406371</td>
-      <td>0.380819</td>
-      <td>0.421253</td>
-      <td>0.361576</td>
-      <td>1.822778</td>
-      <td>5.394722</td>
-      <td>0.778128</td>
-      <td>0.463193</td>
-      <td>0.402209</td>
-      <td>0.046934</td>
-      <td>0.816093</td>
-      <td>0.632045</td>
-      <td>3.557775</td>
-      <td>0.559074</td>
-    </tr>
-    <tr>
-      <th>min</th>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-    </tr>
-    <tr>
-      <th>25%</th>
-      <td>7.330000</td>
-      <td>7.250000</td>
-      <td>7.420000</td>
-      <td>7.330000</td>
-      <td>7.330000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>10.000000</td>
-      <td>7.250000</td>
-      <td>7.330000</td>
-      <td>0.095000</td>
-      <td>0.000000</td>
-      <td>10.000000</td>
-      <td>81.080000</td>
-      <td>10.000000</td>
-    </tr>
-    <tr>
-      <th>50%</th>
-      <td>7.580000</td>
-      <td>7.420000</td>
-      <td>7.580000</td>
-      <td>7.500000</td>
-      <td>7.500000</td>
-      <td>0.000000</td>
-      <td>2.000000</td>
-      <td>10.000000</td>
-      <td>7.500000</td>
-      <td>7.580000</td>
-      <td>0.110000</td>
-      <td>0.000000</td>
-      <td>10.000000</td>
-      <td>82.500000</td>
-      <td>10.000000</td>
-    </tr>
-    <tr>
-      <th>75%</th>
-      <td>7.750000</td>
-      <td>7.580000</td>
-      <td>7.750000</td>
-      <td>7.750000</td>
-      <td>7.670000</td>
-      <td>0.000000</td>
-      <td>4.000000</td>
-      <td>10.000000</td>
-      <td>7.750000</td>
-      <td>7.750000</td>
-      <td>0.120000</td>
-      <td>0.000000</td>
-      <td>10.000000</td>
-      <td>83.670000</td>
-      <td>10.000000</td>
-    </tr>
-    <tr>
-      <th>max</th>
-      <td>8.750000</td>
-      <td>8.670000</td>
-      <td>8.750000</td>
-      <td>8.750000</td>
-      <td>8.580000</td>
-      <td>31.000000</td>
-      <td>55.000000</td>
-      <td>10.000000</td>
-      <td>10.000000</td>
-      <td>8.830000</td>
-      <td>0.200000</td>
-      <td>11.000000</td>
-      <td>10.000000</td>
-      <td>90.580000</td>
-      <td>10.000000</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-This was a little check to see what the data looks like. We see the mean and standard deviation for each category, as well as the first, second, and third quartile.
-
-
-# Part 3: Data Mining
-
-<a href="https://github.com/IzzyIllari/IzzyIllari.github.io/blob/main/data_mining.md" target="_blank">Analysis code here.</a>
-
-## 3.1 Regression
-
-As we have both numerical and factor level data we can do both linear and logistic regression. For the linear regression we can test the effectiveness of our model by using the following tests: adjusted R2, BIC/AIC, and Mallows's Cp. For logistic regression we can use the Hosmer-Lemeshow statistic, Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC), and the McFadden statistic to test our goodness of fit.
-
-### Linear Regression
-
-
-```python
-#want to convert categorical variables into dummy/indicator variables
-dummies = pd.get_dummies(df_combined_cleaned[["CountryISO3", "InCountryPartner", "Species"]])
-dummies.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>CountryISO3_BDI</th>
-      <th>CountryISO3_BRA</th>
-      <th>CountryISO3_CHN</th>
-      <th>CountryISO3_CIV</th>
-      <th>CountryISO3_COL</th>
-      <th>CountryISO3_CRI</th>
-      <th>CountryISO3_ECU</th>
-      <th>CountryISO3_ETH</th>
-      <th>CountryISO3_GTM</th>
-      <th>CountryISO3_HND</th>
-      <th>...</th>
-      <th>InCountryPartner_Specialty Coffee Association</th>
-      <th>InCountryPartner_Specialty Coffee Association of Costa Rica</th>
-      <th>InCountryPartner_Specialty Coffee Association of Indonesia</th>
-      <th>InCountryPartner_Specialty Coffee Institute of Asia</th>
-      <th>InCountryPartner_Tanzanian Coffee Board</th>
-      <th>InCountryPartner_Torch Coffee Lab Yunnan</th>
-      <th>InCountryPartner_Uganda Coffee Development Authority</th>
-      <th>InCountryPartner_Yunnan Coffee Exchange</th>
-      <th>Species_Arabica</th>
-      <th>Species_Robusta</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 61 columns</p>
-</div>
-
-
-
-
-```python
-# my target variable, which is the grade of the coffee
-y = df_combined_cleaned.TotCupPts.astype(float)
-
-# Drop the column with the target variable (TotCupPts), the letter grades, and columns for which we created dummy variables
-X_ = df_combined_cleaned.drop(["TotCupGrade", "TotCupPts", "CountryISO3", "InCountryPartner", "Species", "GradingDate"], axis=1).astype('float64')
-
-# Define the feature set X.
-X = pd.concat([X_, dummies[["Species_Arabica", "CountryISO3_MEX", "InCountryPartner_AMECAFE"]]], axis=1)
-
-X.info()
-```
-
-    <class 'pandas.core.frame.DataFrame'>
-    Int64Index: 1243 entries, 0 to 25
-    Data columns (total 17 columns):
-     #   Column                    Non-Null Count  Dtype
-    ---  ------                    --------------  -----
-     0   Acidity                   1243 non-null   float64
-     1   Aftertaste                1243 non-null   float64
-     2   Aroma                     1243 non-null   float64
-     3   Balance                   1243 non-null   float64
-     4   Body                      1243 non-null   float64
-     5   Cat1Defects               1243 non-null   float64
-     6   Cat2Defects               1243 non-null   float64
-     7   CleanCup                  1243 non-null   float64
-     8   CupperPoints              1243 non-null   float64
-     9   Flavor                    1243 non-null   float64
-     10  Moisture                  1243 non-null   float64
-     11  Quakers                   1243 non-null   float64
-     12  Sweetness                 1243 non-null   float64
-     13  Uniformity                1243 non-null   float64
-     14  Species_Arabica           1243 non-null   uint8
-     15  CountryISO3_MEX           1243 non-null   uint8
-     16  InCountryPartner_AMECAFE  1243 non-null   uint8
-    dtypes: float64(14), uint8(3)
-    memory usage: 149.3 KB
-
-
-I *cannot* use my datetime variable in linear regression. All categorical variables need to be converted to dummy variables, and I can only use numerical data. The logistic regression may be able to better understand our data with the categorical variables.
-
-Now we can find the best subset selection by identifying the best model that contains a given number of predictors, where **best** is quantified using RSS (the residual sum of squares).
-
-
-```python
-def processSubset(feature_set):
-    # fit model
-    model = sm.OLS(y, X[list(feature_set)])
-    regr = model.fit()
-    # calculate RSS
-    RSS = ((regr.predict(X[list(feature_set)]) - y) ** 2).sum()
-    return {"model":regr, "RSS":RSS}
-```
-
-
-```python
-def getBest(k):
-    start_time = time.time()
-    # start empty
-    results = []
-    for combo in itertools.combinations(X.columns, k):
-        results.append(processSubset(combo))
-    # results into dataframe
-    models = pd.DataFrame(results)
-    # Choose the model with the highest RSS
-    best_model = models.loc[models['RSS'].argmin()]
-    end_time = time.time()
-    print("Processed", models.shape[0], "models on", k, "predictors in", (end_time - start_time), "seconds.")
-    # Return the best model
-    return best_model
-```
-
-Now we have a `dataframe` with the best model. We want to see how our model performs with more variables (predictors `k`). ***This chunk of code takes some time to run.***
-
-
-```python
-models_best = pd.DataFrame(columns=["RSS", "model"])
-start_time = time.time()
-for i in range(1,8):
-    models_best.loc[i] = getBest(i)
-
-end_time = time.time()
-print("Total elapsed time:", (end_time - start_time), "seconds.")
-```
-
-    Processed 17 models on 1 predictors in 0.04954886436462402 seconds.
-    Processed 136 models on 2 predictors in 0.3105587959289551 seconds.
-    Processed 680 models on 3 predictors in 1.4623608589172363 seconds.
-    Processed 2380 models on 4 predictors in 5.253686904907227 seconds.
-    Processed 6188 models on 5 predictors in 14.474210977554321 seconds.
-    Processed 12376 models on 6 predictors in 30.128018856048584 seconds.
-    Processed 19448 models on 7 predictors in 54.3415961265564 seconds.
-    Total elapsed time: 107.56122303009033 seconds.
-
-
-Let's look at our models!
-
-
-```python
-models_best
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>RSS</th>
-      <th>model</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>1</th>
-      <td>5612.742932</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2381.736820</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>1432.299229</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>873.761838</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>496.102586</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>294.246419</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>170.478938</td>
-      <td>&lt;statsmodels.regression.linear_model.Regressio...</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-And we want to look at our best model...
-
-
-```python
-print(models_best.loc[1, "model"].summary())
-```
-
-                                     OLS Regression Results
-    =======================================================================================
-    Dep. Variable:              TotCupPts   R-squared (uncentered):                   0.999
-    Model:                            OLS   Adj. R-squared (uncentered):              0.999
-    Method:                 Least Squares   F-statistic:                          1.855e+06
-    Date:                Mon, 09 Nov 2020   Prob (F-statistic):                        0.00
-    Time:                        13:28:01   Log-Likelihood:                         -2700.7
-    No. Observations:                1243   AIC:                                      5403.
-    Df Residuals:                    1242   BIC:                                      5408.
-    Df Model:                           1
-    Covariance Type:            nonrobust
-    ==============================================================================
-                     coef    std err          t      P>|t|      [0.025      0.975]
-    ------------------------------------------------------------------------------
-    Flavor        10.9066      0.008   1361.932      0.000      10.891      10.922
-    ==============================================================================
-    Omnibus:                      102.645   Durbin-Watson:                   1.449
-    Prob(Omnibus):                  0.000   Jarque-Bera (JB):              535.368
-    Skew:                          -0.139   Prob(JB):                    5.58e-117
-    Kurtosis:                       6.203   Cond. No.                         1.00
-    ==============================================================================
-
-    Notes:
-    [1] R² is computed without centering (uncentered) since the model does not contain a constant.
-    [2] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-
-
-Wow! It looks like our best model, with an adjusted R2 value of 0.999, has only a single variable: `Flavor`. Somehow this seems obvious... Let's see what the model looks like with the most possible predictors. There is only 1 model with 17 predictors, which is the most that we could use in a model.
-
-
-```python
-print(getBest(17)["model"].summary())
-```
-
-    Processed 1 models on 17 predictors in 0.007277965545654297 seconds.
-                                     OLS Regression Results
-    =======================================================================================
-    Dep. Variable:              TotCupPts   R-squared (uncentered):                   1.000
-    Model:                            OLS   Adj. R-squared (uncentered):              1.000
-    Method:                 Least Squares   F-statistic:                          2.292e+09
-    Date:                Mon, 09 Nov 2020   Prob (F-statistic):                        0.00
-    Time:                        13:28:01   Log-Likelihood:                          3492.5
-    No. Observations:                1243   AIC:                                     -6951.
-    Df Residuals:                    1226   BIC:                                     -6864.
-    Df Model:                          17
-    Covariance Type:            nonrobust
-    ============================================================================================
-                                   coef    std err          t      P>|t|      [0.025      0.975]
-    --------------------------------------------------------------------------------------------
-    Acidity                      0.9966      0.002    483.612      0.000       0.993       1.001
-    Aftertaste                   1.0015      0.003    379.242      0.000       0.996       1.007
-    Aroma                        0.9986      0.002    512.101      0.000       0.995       1.002
-    Balance                      1.0016      0.002    543.896      0.000       0.998       1.005
-    Body                         1.0039      0.002    513.503      0.000       1.000       1.008
-    Cat1Defects                 -0.0038      0.000    -15.500      0.000      -0.004      -0.003
-    Cat2Defects                 -0.0002   8.86e-05     -1.707      0.088      -0.000    2.26e-05
-    CleanCup                     0.9993      0.001   1439.410      0.000       0.998       1.001
-    CupperPoints                 0.9965      0.002    566.888      0.000       0.993       1.000
-    Flavor                       1.0009      0.003    350.024      0.000       0.995       1.007
-    Moisture                     0.0062      0.009      0.659      0.510      -0.012       0.025
-    Quakers                     -0.0002      0.001     -0.407      0.684      -0.001       0.001
-    Sweetness                    0.9990      0.001    998.349      0.000       0.997       1.001
-    Uniformity                   1.0019      0.001   1078.005      0.000       1.000       1.004
-    Species_Arabica              0.0027      0.004      0.739      0.460      -0.005       0.010
-    CountryISO3_MEX              0.0012      0.003      0.462      0.644      -0.004       0.007
-    InCountryPartner_AMECAFE     0.0003      0.003      0.088      0.930      -0.005       0.006
-    ==============================================================================
-    Omnibus:                     2311.360   Durbin-Watson:                   1.859
-    Prob(Omnibus):                  0.000   Jarque-Bera (JB):          6250607.616
-    Skew:                         -12.842   Prob(JB):                         0.00
-    Kurtosis:                     349.450   Cond. No.                         602.
-    ==============================================================================
-
-    Notes:
-    [1] R² is computed without centering (uncentered) since the model does not contain a constant.
-    [2] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-
-
-This model gives us an adjusted R2 of 1.00, but we need to check the number of predictors that is optimal. We'll be using RSS, adjusted R2, BIC, and AIC. I don't want all the models but I will increase the number that I looked at.
-
-
-```python
-# THIS TAKES VERY LONG TO RUN
-models_best = pd.DataFrame(columns=["RSS", "model"])
-start_time = time.time()
-for i in range(1,18):
-    models_best.loc[i] = getBest(i)
-
-end_time = time.time()
-print("Total elapsed time:", (end_time - start_time), "seconds.")
-```
-
-    Processed 17 models on 1 predictors in 0.04756283760070801 seconds.
-    Processed 136 models on 2 predictors in 0.3130199909210205 seconds.
-    Processed 680 models on 3 predictors in 1.3569262027740479 seconds.
-    Processed 2380 models on 4 predictors in 5.042255878448486 seconds.
-    Processed 6188 models on 5 predictors in 13.862514734268188 seconds.
-    Processed 12376 models on 6 predictors in 29.63919711112976 seconds.
-    Processed 19448 models on 7 predictors in 50.25207591056824 seconds.
-    Processed 24310 models on 8 predictors in 74.75870299339294 seconds.
-    Processed 24310 models on 9 predictors in 78.7052788734436 seconds.
-    Processed 19448 models on 10 predictors in 66.05529594421387 seconds.
-    Processed 12376 models on 11 predictors in 42.87568807601929 seconds.
-    Processed 6188 models on 12 predictors in 20.359138011932373 seconds.
-    Processed 2380 models on 13 predictors in 8.379215717315674 seconds.
-    Processed 680 models on 14 predictors in 2.4351017475128174 seconds.
-    Processed 136 models on 15 predictors in 0.48162198066711426 seconds.
-    Processed 17 models on 16 predictors in 0.05788421630859375 seconds.
-    Processed 1 models on 17 predictors in 0.004394054412841797 seconds.
-    Total elapsed time: 401.55227184295654 seconds.
-
-
-
-```python
-# create dataframe with the RSS, adjusted R2, AIC, and BIC values
-model_data_df = pd.DataFrame(models_best["RSS"], columns = ['RSS'])
-model_data_df["adjR2"] = models_best.apply(lambda row: row[1].rsquared_adj, axis=1)
-model_data_df["AIC"] = models_best.apply(lambda row: row[1].aic, axis=1)
-model_data_df["BIC"] = models_best.apply(lambda row: row[1].bic, axis=1)
-list_k = range(1, 18)
-model_data_df["k"] = list_k
-```
-
-
-```python
-# plot side by side
-fig, ax = plt.subplots(2,2, sharey = False, figsize=(15,10))
-
-plot_rss = sns.lineplot(data = model_data_df,
-                        x = "k",
-                        y = "RSS",
-                        ax = ax[0, 0]
-                       )
-
-plot_adjR2 = sns.lineplot(data = model_data_df,
-                        x = "k",
-                        y = "adjR2",
-                        ax = ax[0, 1]
-                       )
-
-plot_aic = sns.lineplot(data = model_data_df,
-                        x = "k",
-                        y = "AIC",
-                        ax = ax[1, 0]
-                       )
-
-plot_bic = sns.lineplot(data = model_data_df,
-                        x = "k",
-                        y = "BIC",
-                        ax = ax[1, 1]
-                       )
-
-plot_rss.set(xlabel = "# Predictors")
-plot_adjR2.set(xlabel = "# Predictors", ylabel = "adjusted R2")
-plot_aic.set(xlabel = "# Predictors")
-plot_bic.set(xlabel = "# Predictors")
-
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_69_0.png)
-
-
-
-As we can see all models agree that more predictors the better the model. It seems that 10 predictors is the best model. We want RSS, AIC, and BIC to be as small as possible, and the adjusted R2 to be large. 10 predictors is when the statistics all plateau. Let's look at this best model.
-
-
-```python
-print(getBest(10)["model"].summary())
-```
-
-    Processed 19448 models on 10 predictors in 65.71242809295654 seconds.
-                                     OLS Regression Results
-    =======================================================================================
-    Dep. Variable:              TotCupPts   R-squared (uncentered):                   1.000
-    Model:                            OLS   Adj. R-squared (uncentered):              1.000
-    Method:                 Least Squares   F-statistic:                          3.163e+09
-    Date:                Mon, 09 Nov 2020   Prob (F-statistic):                        0.00
-    Time:                        13:35:51   Log-Likelihood:                          3359.4
-    No. Observations:                1243   AIC:                                     -6699.
-    Df Residuals:                    1233   BIC:                                     -6648.
-    Df Model:                          10
-    Covariance Type:            nonrobust
-    ================================================================================
-                       coef    std err          t      P>|t|      [0.025      0.975]
-    --------------------------------------------------------------------------------
-    Acidity          0.9972      0.002    438.424      0.000       0.993       1.002
-    Aftertaste       1.0039      0.003    344.926      0.000       0.998       1.010
-    Aroma            0.9997      0.002    463.641      0.000       0.995       1.004
-    Balance          1.0015      0.002    495.078      0.000       0.998       1.005
-    Body             1.0004      0.002    467.170      0.000       0.996       1.005
-    CleanCup         1.0004      0.001   1342.376      0.000       0.999       1.002
-    CupperPoints     0.9959      0.002    513.442      0.000       0.992       1.000
-    Flavor           0.9994      0.003    316.176      0.000       0.993       1.006
-    Sweetness        0.9988      0.001   1215.236      0.000       0.997       1.000
-    Uniformity       1.0024      0.001    985.741      0.000       1.000       1.004
-    ==============================================================================
-    Omnibus:                     2956.737   Durbin-Watson:                   1.921
-    Prob(Omnibus):                  0.000   Jarque-Bera (JB):         24355006.388
-    Skew:                         -22.582   Prob(JB):                         0.00
-    Kurtosis:                     687.259   Cond. No.                         210.
-    ==============================================================================
-
-    Notes:
-    [1] R² is computed without centering (uncentered) since the model does not contain a constant.
-    [2] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-
-
-So this is definitely a case of how complex do you want your model, because, according to the RSS and adjusted R2 statistics, the first 1-parameter model we looked at is pretty good. The 17-parameter model is also good, and so is this 10-parameter model. We might be seeing a case of where we need to find the right balance between variance and bias, because some of these multi-parameter models could be easily over-fitting. But, so far, from our analysis of RSS, adjusted R2, BIC, and AIC, it looks like our 10-parameter model is pretty good.
-
-### Logistic Regression
-Turning to logistic regression, we already have all our dummy variables from when we were doing linear regression, so that will be re-used. I can use `y` (our target), `X_`, which has all the numerical values of the cleaned dataset, and then our dummy variables in `dummies`.
-
-Since LogisticRegression is not for regression but classification the `y` variable must be the classification class (e.g. 0 or 1) and not a continuous variable. This means that I can't use `TotCupPts` (float) but must create dummy variables of `TotCupGrades`, which is a categorical variable. Our target will be the most common grade (B).
-
-
-```python
-# dummy variables with target TotCupGrade
-dummies_target = pd.get_dummies(df_combined_cleaned[["TotCupGrade"]])
-# create the dataframe with target, numerical data, and all the dummy variables of our categorical variables
-data_final = pd.concat([dummies_target["TotCupGrade_B"], X_, dummies], axis=1, sort=False)
-# needs to be re-named for later use
-data_final = data_final.rename({'TotCupGrade_B': 'y'}, axis=1)
-```
-
-Before I go any further I need to ensure that there are *at least* 6 samples in each class. 6 is the default and KNN (hence SMOTE) is likely to fail if we don't have at least 6. We should not be using sparse classes in SMOTE. I will get rid of any classes that have on the order of ~10 samples.
-
-
-```python
-# empty list
-vars_list = []
-# loop thru columns of the data_final
-for col in data_final.columns:
-    # search for classes with sparse samples
-    # this will only catch the categorical variables that have been one hot encoded
-    if (data_final[col].sum() < 15 ):
-        vars_list.append(col)
-    else:
-        pass
-# drop these sparse variables
-data_final = data_final.drop(vars_list, axis=1)
-data_final.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>y</th>
-      <th>Acidity</th>
-      <th>Aftertaste</th>
-      <th>Aroma</th>
-      <th>Balance</th>
-      <th>Body</th>
-      <th>Cat1Defects</th>
-      <th>Cat2Defects</th>
-      <th>CleanCup</th>
-      <th>CupperPoints</th>
-      <th>...</th>
-      <th>InCountryPartner_Ethiopia Commodity Exchange</th>
-      <th>InCountryPartner_Instituto Hondureño del Café</th>
-      <th>InCountryPartner_Kenya Coffee Traders Association</th>
-      <th>InCountryPartner_METAD Agricultural Development plc</th>
-      <th>InCountryPartner_NUCOFFEE</th>
-      <th>InCountryPartner_Specialty Coffee Association</th>
-      <th>InCountryPartner_Specialty Coffee Association of Costa Rica</th>
-      <th>InCountryPartner_Uganda Coffee Development Authority</th>
-      <th>Species_Arabica</th>
-      <th>Species_Robusta</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>8.75</td>
-      <td>8.67</td>
-      <td>8.67</td>
-      <td>8.42</td>
-      <td>8.50</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>10.0</td>
-      <td>8.75</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0</td>
-      <td>8.58</td>
-      <td>8.50</td>
-      <td>8.75</td>
-      <td>8.42</td>
-      <td>8.42</td>
-      <td>0.0</td>
-      <td>1.0</td>
-      <td>10.0</td>
-      <td>8.58</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>0</td>
-      <td>8.42</td>
-      <td>8.42</td>
-      <td>8.17</td>
-      <td>8.25</td>
-      <td>8.50</td>
-      <td>0.0</td>
-      <td>2.0</td>
-      <td>10.0</td>
-      <td>8.67</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-      <td>8.50</td>
-      <td>8.25</td>
-      <td>8.25</td>
-      <td>8.33</td>
-      <td>8.42</td>
-      <td>0.0</td>
-      <td>2.0</td>
-      <td>10.0</td>
-      <td>8.58</td>
-      <td>...</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>0</td>
-      <td>8.42</td>
-      <td>8.50</td>
-      <td>8.25</td>
-      <td>8.50</td>
-      <td>8.33</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>10.0</td>
-      <td>9.00</td>
-      <td>...</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 48 columns</p>
-</div>
-
-
-
-Now let's create our `X` and `y` again.
-
-
-```python
-# all data that is not y, or is not the target
-X = data_final.loc[:, data_final.columns != 'y']
-# only the target
-y = data_final.loc[:, data_final.columns == 'y']
-```
-
-I can use SMOTE (Synthetic Minority Oversampling Technique) in Python to up-sample the `Total Cup Points` target variable. This will work by creating synthetic samples from the minor class (`y`) instead of creating copies. Then it will randomly choose one of the kNN (k-nearest neighbors) and will use kNN to create a similar, but randomly tweaked, new observations.
-
-
-```python
-# transform the dataset
-oversample = SMOTE(random_state=0)
-# split the data into training and tests
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-columns = X_train.columns
-```
-
-Okay, we've transformed the data and created our training and testing datasets.
-
-
-```python
-oversample_data_X, oversample_data_y = oversample.fit_sample(X_train, y_train)
-oversample_data_X = pd.DataFrame(data = oversample_data_X, columns=columns )
-oversample_data_y = pd.DataFrame(data = oversample_data_y, columns=['y'])
-```
-
-It looks like that worked! Let's check the numbers.
-
-
-```python
-print("The length of oversampled data is:", len(oversample_data_X))
-print("Number of Grade B in oversampled data:", len(oversample_data_y[oversample_data_y['y']==0]))
-print("Number of Grades other than B:",len(oversample_data_y[oversample_data_y['y']==1]))
-print("Proportion of Grade B data in oversampled data is:", len(oversample_data_y[oversample_data_y['y']==0])/len(oversample_data_X))
-print("Proportion of Grades other than B data in oversampled data is:", len(oversample_data_y[oversample_data_y['y']==1])/len(oversample_data_X))
-```
-
-    The length of oversampled data is: 1014
-    Number of Grade B in oversampled data: 507
-    Number of Grades other than B: 507
-    Proportion of Grade B data in oversampled data is: 0.5
-    Proportion of Grades other than B data in oversampled data is: 0.5
-
-
-The data is balanced. We have only over-sampled the training data so that none of the information in the test data was used to create synthetic observations. This will prevent information to bleed from the test data into the model training.
-
-Now I will perform Recursive Feature Elimination (RFE) on the data. We will repeatedly construct the model and choose the best or worst performing feature, and then cast that variable aside and repeating the process. This will be performed for all features.
-
-
-```python
-# get variable names
-data_final_vars = data_final.columns.values.tolist()
-y = ['y']
-X = [i for i in data_final_vars if i not in y]
-```
-
-
-```python
-# create our LogisticRegression object
-logreg = LogisticRegression()
-# create our RFE object from the LogisticRegression
-rfe = RFE(logreg, 20)
-# look at our oversampled data
-rfe = rfe.fit(oversample_data_X, oversample_data_y.values.ravel())
-```
-
-Let's find what variables have been selected!
-
-
-```python
-# create dataframe with the RFE results
-rfe_var_df = pd.DataFrame(X, columns = ['Feature'])
-rfe_var_df["Support"] = rfe.support_
-rfe_var_df["Ranking"] = rfe.ranking_
-# search for only true
-rslt_df = rfe_var_df[rfe_var_df['Support'] == True]
-```
-
-Let's get our model from these variables.
-
-
-```python
-# columns of the features we support
-cols = rslt_df["Feature"]
-# get the data
-X = oversample_data_X[cols]
-y = oversample_data_y['y']
-```
-
-Now we can impliment our model.
-
-
-```python
-# logistic regression model with our supported data
-logit_model = sm.Logit(y,X)
-# fitting the model and the result
-result = logit_model.fit()
-# print results
-print(result.summary2())
-```
-
-    Warning: Maximum number of iterations has been exceeded.
-             Current function value: inf
-             Iterations: 35
-                                                    Results: Logit
-    ==============================================================================================================
-    Model:                               Logit                            Pseudo R-squared:                 inf
-    Dependent Variable:                  y                                AIC:                              inf
-    Date:                                2020-11-09 13:35                 BIC:                              inf
-    No. Observations:                    1014                             Log-Likelihood:                   -inf
-    Df Model:                            19                               LL-Null:                          0.0000
-    Df Residuals:                        994                              LLR p-value:                      1.0000
-    Converged:                           0.0000                           Scale:                            1.0000
-    No. Iterations:                      35.0000
-    --------------------------------------------------------------------------------------------------------------
-                                                          Coef.    Std.Err.     z    P>|z|     [0.025     0.975]
-    --------------------------------------------------------------------------------------------------------------
-    Acidity                                               -0.4056     0.3915 -1.0359 0.3003     -1.1730     0.3618
-    Aftertaste                                            -0.1021     0.4844 -0.2109 0.8330     -1.0515     0.8473
-    Balance                                                0.1718     0.3540  0.4853 0.6274     -0.5220     0.8657
-    CupperPoints                                           0.8363     0.3325  2.5154 0.0119      0.1847     1.4879
-    Flavor                                                 0.7232     0.4948  1.4618 0.1438     -0.2465     1.6930
-    Moisture                                              -0.6942     1.7335 -0.4005 0.6888     -4.0918     2.7033
-    Sweetness                                             -1.2186     0.2144 -5.6832 0.0000     -1.6388    -0.7983
-    CountryISO3_CHN                                        1.6430     0.6717  2.4458 0.0145      0.3264     2.9596
-    CountryISO3_COL                                       25.8702 41336.4301  0.0006 0.9995 -80992.0440 81043.7845
-    CountryISO3_CRI                                        1.2937     0.4237  3.0536 0.0023      0.4633     2.1240
-    CountryISO3_ETH                                       -0.4178     0.3851 -1.0848 0.2780     -1.1726     0.3370
-    CountryISO3_GTM                                        0.8141     0.2104  3.8692 0.0001      0.4017     1.2265
-    CountryISO3_SLV                                        1.7651     0.6814  2.5906 0.0096      0.4297     3.1006
-    CountryISO3_THA                                        1.4570     0.5510  2.6444 0.0082      0.3771     2.5368
-    CountryISO3_TZA                                        0.8935     0.4800  1.8614 0.0627     -0.0473     1.8343
-    CountryISO3_UGA                                        1.0064     0.4402  2.2864 0.0222      0.1437     1.8691
-    InCountryPartner_Almacafé                            -23.3046 41336.4301 -0.0006 0.9996 -81041.2189 80994.6097
-    InCountryPartner_Blossom Valley International          0.4015     0.3390  1.1845 0.2362     -0.2629     1.0659
-    InCountryPartner_Brazil Specialty Coffee Association   1.0872     0.3118  3.4870 0.0005      0.4761     1.6984
-    Species_Arabica                                        2.4229     0.6990  3.4661 0.0005      1.0528     3.7930
-    ==============================================================================================================
-
-
-
-Hm! These values are not great. I'm going to set an alpha value of 0.05, and for every feature with a p value > alpha I'm going to remove it. Then we'll see how our model looks. From these results it seems that the country of origin might be a player in terms of the grade of our coffee. But remember that our target is how to get a Grade B coffee, the most common coffee. (We couldn't do Grade A- because only two coffees received that grade, meaning KNN/SMOTE would have failed).
-
-
-```python
-# get pvalues from logit_model
-pvals_s = result.pvalues
-# turn the series into a dataframe
-pvals_df = pd.DataFrame({'Feature': pvals_s.index, 'pvalue': pvals_s.values})
-# search for features that are significant
-pvals_sig_df = pvals_df[pvals_df['pvalue'] <= 0.05]
-# create a list of significant features only
-cols = pvals_sig_df["Feature"]
-# create data from these features
-X = oversample_data_X[cols]
-y = oversample_data_y['y']
-# create a new logit_model
-logit_model = sm.Logit(y,X)
-# get these results
-result = logit_model.fit()
-# print
-print(result.summary2())
-```
-
-    Optimization terminated successfully.
-             Current function value: inf
-             Iterations 6
-                                               Results: Logit
-    ====================================================================================================
-    Model:                           Logit                         Pseudo R-squared:              inf
-    Dependent Variable:              y                             AIC:                           inf
-    Date:                            2020-11-09 13:35              BIC:                           inf
-    No. Observations:                1014                          Log-Likelihood:                -inf
-    Df Model:                        9                             LL-Null:                       0.0000
-    Df Residuals:                    1004                          LLR p-value:                   1.0000
-    Converged:                       1.0000                        Scale:                         1.0000
-    No. Iterations:                  6.0000
-    ----------------------------------------------------------------------------------------------------
-                                                          Coef.  Std.Err.    z    P>|z|   [0.025  0.975]
-    ----------------------------------------------------------------------------------------------------
-    CupperPoints                                          1.1429   0.1564  7.3054 0.0000  0.8362  1.4495
-    Sweetness                                            -1.1193   0.1600 -6.9940 0.0000 -1.4329 -0.8056
-    CountryISO3_CHN                                       1.2256   0.6662  1.8397 0.0658 -0.0802  2.5313
-    CountryISO3_CRI                                       0.8316   0.4137  2.0100 0.0444  0.0207  1.6425
-    CountryISO3_GTM                                       0.3873   0.1930  2.0064 0.0448  0.0090  0.7657
-    CountryISO3_SLV                                       1.3782   0.6678  2.0637 0.0390  0.0693  2.6872
-    CountryISO3_THA                                       0.9902   0.5438  1.8207 0.0686 -0.0757  2.0561
-    CountryISO3_UGA                                       0.6529   0.4302  1.5175 0.1291 -0.1903  1.4961
-    InCountryPartner_Brazil Specialty Coffee Association  0.6462   0.3015  2.1435 0.0321  0.0553  1.2371
-    Species_Arabica                                       2.4078   0.6434  3.7424 0.0002  1.1468  3.6688
-    ====================================================================================================
-
-
-
-Bit concerned about why the pseudo R2, AIC, BIC and others are returning `inf` values, but we can continue and see how this model performs.
-
-
-```python
-# using our new model with the specified supported and significant features
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-logreg = LogisticRegression()
-logreg.fit(X_train, y_train)
-```
-
-
-
-
-    LogisticRegression()
-
-
-
-
-```python
-y_pred = logreg.predict(X_test)
-print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
-```
-
-    Accuracy of logistic regression classifier on test set: 0.80
-
-
-Okay! That doesn't look too bad. Let's check out the confusion matrix and see how we do with predicting the results and how many we incorrectly predict.
-
-
-```python
-# look at both non-normalized and normalized confusion matrix
-titles_options = [("Confusion matrix, without normalization", None),
-                  ("Normalized confusion matrix", 'true')]
-for title, normalize in titles_options:
-    disp = plot_confusion_matrix(logreg, X_test, y_test,
-                                 #display_labels = class_names,
-                                 cmap = plt.cm.YlGnBu,
-                                 normalize = normalize)
-    disp.ax_.set_title(title)
-
-    print(title)
-    print(disp.confusion_matrix)
-
-plt.show()
-```
-
-    Confusion matrix, without normalization
-    [[114  24]
-     [ 37 130]]
-    Normalized confusion matrix
-    [[0.82608696 0.17391304]
-     [0.22155689 0.77844311]]
-
-
-
-
-![png](code_output_files/code_output_100_1.png)
-
-
-
-
-
-![png](code_output_files/code_output_100_2.png)
-
-
-
-The top left (0,0) is the True Negative and the bottom right (1,1) is the True Positive results. This means that a True Negative is that you predicted `no` and were `correct`, and True Positive means that you predicted `yes` and were `correct`. The other two options are False Positive (top right) and False Negative (bottom left). We want a high value in TN and TP, and a low value in FN and FP. We have TN at 83% and TP at 78%, while our FP is at 17% and our FN is at 22%. These are pretty good results for predicting a Grade B coffee!
-
-The next statistic I'll look at for our logit model is the ROC (receiver operating characteristic) Curve. The receiver operating characteristic (ROC) curve is another common tool used with binary classifiers. For the ROC curve you plot a linear line of a purely random classifier and then the curve of your own model. A good classifier stays as far away from that line as possible, and we want a high AUC (area under the curve).
-
-
-```python
-# get roc and auc scores from our test data
-logit_roc_auc = roc_auc_score(y_test, logreg.predict(X_test))
-# data we need for plotting our curve
-fpr, tpr, thresholds = roc_curve(y_test, logreg.predict_proba(X_test)[:,1])
-# create our dataframe
-data_roc = [fpr, tpr, thresholds]
-data_roc_df = pd.DataFrame(fpr, columns=["fpr"])
-data_roc_df["tpr"] = tpr
-data_roc_df["thresholds"] = thresholds
-data_roc_df["Category"] = "Logistic Regression"
-# create data for the ptest classifier
-x_dat = np.linspace(0, 1, len(data_roc_df))
-y_dat = x_dat
-categories = []
-for i in y_dat:
-    categories.append("Random Classifier")
-data_class = pd.DataFrame(x_dat, columns=["fpr"])
-data_class["tpr"] = y_dat
-data_class["thresholds"] = "Nan"
-data_class["Category"] = categories
-# combine the two dataframes
-frames = [data_roc_df, data_class]
-data_roc_fin = pd.concat(frames)
-```
-
-
-```python
-sns.set_context("talk", font_scale = 1)
-
-plot_roc = sns.lineplot(data = data_roc_fin,
-             x = "fpr",
-             y = "tpr",
-             hue = "Category",
-             palette = "colorblind"
-                       )
-
-# set plot labels
-title_str = "AUC = " + str(round(logit_roc_auc, 3))
-plot_roc.set(
-    title = title_str,
-    xlabel = "False Positive Rate",
-    ylabel = "True Positive Rate"
-)
-
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_103_0.png)
-
-
-
-You know what, this looks like a pretty good model. All of our tests are showing us that about ~80% of the time we can accurately predict our test data. This looks good. Our target was to predict if a coffee will be Grade B, and we can do that 80% of the time.
-
-## 3.2 Unsupervised Clustering
-
-With clustering we can create natural groupings for a set of data objects that might not be explicitly stated in the data itself. We can do this by using Kmeans/Kmedoids (numerical) and Kmodes (categorical).
-
-### Kmeans/Kmedoids
-
-Kmeans and Kmedoids are both for numerical data. The difference comes in what each algorithm aims to minimize. Te more popular Kmeans tries to minimize the total squared error from a central position (centroids) in each cluster, whereas Kmedoids tries to minimize the sum of dissimilarities between objects labeled to be in a cluster and one of the objects designated as the representative of that cluster (medoids). Kmeans has centroids that may not necessarily be in the data whereas Kmedoid has medoids that are from the dataset. Due to how our data looks (see the pairs plot below), it appears that unsupervised clustering models may be difficult to impliment. There are not very man clearly defined clusters. SVM might be better if we can look at the data in a 3rd dimension, and we will see how this goes in the next section. For now we choose the more popular method of `KMeans`, and hope that we get some useful clustering models.
-
-
-```python
-# we need only the numerical data except for the target and the species
-data_num_combo = df_combined_cleaned.select_dtypes(exclude=['object', "datetime"])
-data_num_combo["CoffeeGrade"] = df_combined_cleaned["TotCupGrade"]
-data_num_combo["Species"] = df_combined_cleaned["Species"]
-data_num_combo = data_num_combo.drop(["TotCupPts"], axis=1)
-```
-
-Before I perform any clustering I want to check out the pairs plots to see if I can visually identify any potential clusters. I'll only be performing clustering on the pairs that look like they might have interesting results.
-
-
-```python
-sns.set_context("talk", font_scale = 1)
-
-sns.pairplot(data_num_combo,
-             hue = 'Species', #color by the coffee species
-             diag_kind = 'kde',
-             plot_kws = {'alpha': 0.6, 's': 80, 'edgecolor': 'k'},
-             size = 4
-            )
-```
-
-
-
-
-    <seaborn.axisgrid.PairGrid at 0x2a5b37438>
-
-
-
-
-
-![png](code_output_files/code_output_107_1.png)
-
-
-
-From the pairs ploit it looks like the column for `Moisture` might be our best bet. The histogram has two clearly defined peaks, and we can see what appears to be two potential clusters. Although there is smearing in some of the data, this will be one of the features we focus on.
-
-
-```python
-# only numeric data
-data_num = data_num_combo.select_dtypes(exclude=['object'])
-
-# convert data to array
-data_arr = np.array(data_num)
-
-# in the above pairs plot it appears that we have 2 clusters
-kmeans = KMeans(n_clusters=2, random_state=0).fit(data_arr)
-y_kmeans = kmeans.predict(data_arr)
-
-# get the labels and centroids
-labels = kmeans.labels_
-centroids = kmeans.cluster_centers_
-```
-
-I'm going to find the location of certain features so that I may call them by name rather than number/position in the array. The features that I have chosen are based on what clusters it appears that I can identify by eye in the pairs plot above. `Moisture` looks to be a column that has a lot of clusters with other feautures, but I want clusters without smearing/outliers, so I've chocen `Moisture` vs `Flavor` (also because flavor was important to our linear regression model). It is impossible to completely avoid smearing, so I have also chosen `Moisture` vs `Aroma` and `Xat2Defects` vs `Body`.
-
-
-```python
-loc_moisture = data_num.columns.get_loc("Moisture")
-loc_flavor = data_num.columns.get_loc("Flavor")
-loc_aroma = data_num.columns.get_loc("Aroma")
-loc_body = data_num.columns.get_loc("Body")
-loc_cat2d = data_num.columns.get_loc("Cat2Defects")
-```
-
-With those picked out I can see how my clusters look.
-
-
-```python
-fig, axs = plt.subplots(2,2, sharey = False, figsize=(15,10))
-
-# moisture vs flavor
-axs[0, 0].scatter(data_arr[:, loc_flavor], data_arr[:, loc_moisture], c = y_kmeans, s = 50, cmap = 'viridis', label = "data")
-axs[0, 0].scatter(centroids[:, loc_flavor], centroids[:, loc_moisture], c = 'red', s = 200, alpha = 0.5, marker = "X", label = "centroids");
-axs[0, 0].legend(loc='upper left')
-axs[0, 0].set(xlabel = 'Flavor', ylabel = 'Moisture')
-
-# moisture vs aroma
-axs[0, 1].scatter(data_arr[:, loc_aroma], data_arr[:, loc_moisture], c = y_kmeans, s = 50, cmap = 'viridis', label = "data")
-axs[0, 1].scatter(centroids[:, loc_aroma], centroids[:, loc_moisture], c = 'red', s = 200, alpha = 0.5, marker = "X", label = "centroids");
-axs[0, 1].legend(loc='upper left')
-axs[0, 1].set(xlabel = 'Aroma', ylabel = 'Moisture')
-
-# cat2defects vs body
-axs[1, 0].scatter(data_arr[:, loc_body], data_arr[:, loc_cat2d], c = y_kmeans, s = 50, cmap = 'viridis', label = "data")
-axs[1, 0].scatter(centroids[:, loc_body], centroids[:, loc_cat2d], c = 'red', s = 200, alpha = 0.5, marker = "X", label = "centroids");
-axs[1, 0].legend(loc='upper left')
-axs[1, 0].set(xlabel = 'Body', ylabel = 'Category 2 Defects')
-
-# moisture vs cat2defects
-axs[1, 1].scatter(data_arr[:, loc_cat2d], data_arr[:, loc_moisture], c = y_kmeans, s = 50, cmap = 'viridis', label = "data")
-axs[1, 1].scatter(centroids[:, loc_cat2d], centroids[:, loc_moisture], c = 'red', s = 200, alpha = 0.5, marker = "X", label = "centroids");
-axs[1, 1].legend(loc='upper right')
-axs[1, 1].set(xlabel = 'Category 2 Defects', ylabel = 'Moisture')
-
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_113_0.png)
-
-
-
-Our numerical data is a poor fit for KMeans cluster models, and I can't imagine that Kmedoids will will any better, considering how our data is geographically heavily overlapped, and there is smearing/a lot of outliers. This could possibly be improved by outlier removal, but then we would have to determine what outliers to remove and why, and we may end up with heavily overlapped data sans outliers.
-
-### Kmodes
-Kmodes is an extensions of Kmeans for categorical data where distances are replaced with dissimilarities (quantifying the total mismatches between two objects, and minimizing this value means the objects are similar) and means are replaces with modes. Our pairs plot only looked at numerical data, but we have plenty of categorical data that is overlooked when performing Kmeans clustering.
-
-For Kmodes clustering I will create a dataframe of only the categorical features.
-
-
-```python
-# only categorical data
-data_categorical = df_combined_cleaned.select_dtypes(include='object')
-data_categorical.info()
-```
-
-    <class 'pandas.core.frame.DataFrame'>
-    Int64Index: 1243 entries, 0 to 25
-    Data columns (total 4 columns):
-     #   Column            Non-Null Count  Dtype
-    ---  ------            --------------  -----
-     0   CountryISO3       1243 non-null   object
-     1   InCountryPartner  1243 non-null   object
-     2   Species           1243 non-null   object
-     3   TotCupGrade       1243 non-null   object
-    dtypes: object(4)
-    memory usage: 48.6+ KB
-
-
-I will use `LabelEncoder` to encode target labels with value between 0 and n_classes-1.
-
-
-```python
-# label encoder
-le = preprocessing.LabelEncoder()
-# create a copy of our data
-data_categorical_copy = data_categorical.copy()
-# encode our categorical data
-data_categorical = data_categorical.apply(le.fit_transform)
-data_categorical.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>CountryISO3</th>
-      <th>InCountryPartner</th>
-      <th>Species</th>
-      <th>TotCupGrade</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>7</td>
-      <td>14</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>7</td>
-      <td>14</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>7</td>
-      <td>14</td>
-      <td>0</td>
-      <td>2</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>7</td>
-      <td>14</td>
-      <td>0</td>
-      <td>2</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>7</td>
-      <td>11</td>
-      <td>0</td>
-      <td>2</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-Two popular approaches for the Kmodes algorithm are Huang and Cao. The Cao approachs selects modes on two points: the density of the data point and Dissimilarity value. The Huang approach suggests two initial mode selection methods:
-1. selecting the first k distinct objects from the data set as the initial k-modes
-2. and then assigning the most frequent categories equally to the initial k-modes
-
-We shall test bost initializations with our data. I will test out 5 clusters.
-
-
-```python
-# "Cao" initialization
-km_cao = KModes(n_clusters = 5, init = "Cao", n_init = 1, verbose=1)
-fitClusters_cao = km_cao.fit_predict(data_categorical)
-```
-
-    Init: initializing centroids
-    Init: initializing clusters
-    Starting iterations...
-    Run 1, iteration: 1/100, moves: 133, cost: 1547.0
-    Run 1, iteration: 2/100, moves: 107, cost: 1547.0
-
-
-
-```python
-# what do the Cao Kmodes clusters look like
-fitClusters_cao
-```
-
-
-
-
-    array([0, 0, 0, ..., 0, 0, 0], dtype=uint16)
-
-
-
-
-```python
-# create dataframe from Cao KModes centroids
-clusterCentroidsDf = pd.DataFrame(km_cao.cluster_centroids_)
-clusterCentroidsDf.columns = data_categorical.columns
-# Mode of the clusters
-clusterCentroidsDf
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>CountryISO3</th>
-      <th>InCountryPartner</th>
-      <th>Species</th>
-      <th>TotCupGrade</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>15</td>
-      <td>18</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>4</td>
-      <td>2</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>8</td>
-      <td>3</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>1</td>
-      <td>8</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>27</td>
-      <td>6</td>
-      <td>0</td>
-      <td>3</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-```python
-# "Huang" initialization
-km_huang = KModes(n_clusters = 5, init = "Huang", n_init = 1, verbose=1)
-fitClusters_huang = km_huang.fit_predict(data_categorical)
-```
-
-    Init: initializing centroids
-    Init: initializing clusters
-    Starting iterations...
-    Run 1, iteration: 1/100, moves: 60, cost: 1831.0
-
-
-
-```python
-fitClusters_huang
-```
-
-
-
-
-    array([0, 0, 0, ..., 1, 1, 1], dtype=uint16)
-
-
-
-
-```python
-# create dataframe from Huang KModes centroids
-clusterCentroidsDf_Huang = pd.DataFrame(km_huang.cluster_centroids_)
-clusterCentroidsDf_Huang.columns = data_categorical.columns
-# Mode of the clusters
-clusterCentroidsDf_Huang
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>CountryISO3</th>
-      <th>InCountryPartner</th>
-      <th>Species</th>
-      <th>TotCupGrade</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>15</td>
-      <td>0</td>
-      <td>0</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>4</td>
-      <td>18</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>27</td>
-      <td>18</td>
-      <td>0</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>15</td>
-      <td>18</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>13</td>
-      <td>13</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-We can see that our two clusters initializations has given us different results. But how can we tell what is the optimal number of clusters? We will choose k by comparing the cost against each k. I will do this for both Cao and Huang. The maximum number of clusters I will allow will be the total number of grades that I made back in data pre-processing. It does not make sense to me to have more clusters than grades.
-
-
-```python
-def find_num_clust(df_in, method, max_num):
-    # empty list for the cost
-    cost = []
-    # loop thru a range of clusters/k
-    for num_clusters in list(range(1, max_num)):
-        kmode = KModes(n_clusters = num_clusters, init = method, n_init = 1, verbose=1)
-        kmode.fit_predict(df_in)
-        # put cost for each k in the list
-        cost.append(kmode.cost_)
-
-    # create a list of k
-    num_k = np.array([i for i in range(1, max_num, 1)])
-    # create a dictionary with k and cost
-    dict_cost_k = {'k' : num_k, 'cost' : cost }
-    # create dataframe
-    df_out = pd.DataFrame(dict_cost_k)
-    # return dataframe
-    return df_out
-```
-
-I've made a function for finding the cost of each k for the specified method. I need the number of grades that are actually used in the data and then I have my upper limit on k.
-
-
-```python
-%%capture
-# %%capture is used to suppress the output of a cell and it must come before any code
-# find th enumber of unique grades in the data
-max_k = data_categorical.TotCupGrade.nunique()
-# find the cost and k of each method
-cost_k_Cao = find_num_clust(data_categorical, "Cao", max_k+1)
-cost_k_Huang = find_num_clust(data_categorical, "Huang", max_k+1)
-```
-
-
-```python
-# plot side by side
-fig, ax = plt.subplots(1, 2, sharey = False, figsize=(15,10))
-
-plot_cao = sns.lineplot(data = cost_k_Cao,
-                        x = "k",
-                        y = "cost",
-                        ax = ax[0]
-                       )
-
-plot_huang = sns.lineplot(data = cost_k_Huang,
-                        x = "k",
-                        y = "cost",
-                        ax = ax[1]
-                       )
-
-plot_cao.set(xlabel = "k", ylabel = "cost", title = "Cao method")
-plot_huang.set(xlabel = "k", ylabel = "cost", title = "Huang method")
-
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_130_0.png)
-
-
-
-The `elbow method` for determing the optimal number of `k` relies on finding when we have the lowest decrease and then a plateau, meaning any larger `k` will not drastically reduce the cost. It looks like both methods have this dip at `k=5` or `k=8`, but the Hunag method has more peaks. I think 5 was a good choice.
-
-
-```python
-# return to our un-encode data
-data_categorical = data_categorical_copy.reset_index()
-# clusters from Cao
-clustersDf_cao = pd.DataFrame(fitClusters_cao)
-clustersDf_cao.columns = ['cluster_predicted_cao']
-# clusters from Huang
-clustersDf_huang = pd.DataFrame(fitClusters_huang)
-clustersDf_huang.columns = ['cluster_predicted_huang']
-# combine clusters and original data
-combinedDf = pd.concat([data_categorical, clustersDf_cao, clustersDf_huang], axis = 1).reset_index()
-combinedDf = combinedDf.drop(['index', 'level_0'], axis = 1)
-combinedDf.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>CountryISO3</th>
-      <th>InCountryPartner</th>
-      <th>Species</th>
-      <th>TotCupGrade</th>
-      <th>cluster_predicted_cao</th>
-      <th>cluster_predicted_huang</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>ETH</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>Arabica</td>
-      <td>A-</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>ETH</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>Arabica</td>
-      <td>A-</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>ETH</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>Arabica</td>
-      <td>B+</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>ETH</td>
-      <td>METAD Agricultural Development plc</td>
-      <td>Arabica</td>
-      <td>B+</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>ETH</td>
-      <td>Ethiopia Commodity Exchange</td>
-      <td>Arabica</td>
-      <td>B+</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-So now let's look at these clusters!
-
-
-```python
-order_seq = combinedDf["TotCupGrade"].value_counts().index
-
-sns.set_context("talk", font_scale = 1)
-
-fig, ax = plt.subplots(1, 2, sharey = False, figsize=(15,10))
-
-plot_country_cao = sns.countplot(data = combinedDf,
-                                 x = "TotCupGrade",
-                                 #order = order_seq,
-                                 hue = "cluster_predicted_cao",
-                                 ax = ax[0],
-                                 palette = "colorblind"
-                                )
-plot_country_huang = sns.countplot(data = combinedDf,
-                                   x = "TotCupGrade",
-                                   #order = order_seq,
-                                   hue = "cluster_predicted_huang",
-                                   ax = ax[1],
-                                   palette = "colorblind"
-                                )
-
-plot_country_cao.set(
-    title = "Count of into which clusters\nthe coffee grade feature falls\n(Cao)",
-    ylabel = "Coffee Grade"
-)
-
-plot_country_huang.set(
-    title = "Count of into which clusters\nthe coffee grade feature falls\n(Huang)",
-    ylabel = "Coffee Grade"
-)
-
-ax[0].legend(loc = "upper right")
-ax[1].legend(loc = "upper right")
-
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_134_0.png)
-
-
-
-There is definitely some difference between the two methods and how they clustered the grades. For the countries and in country partner there are so many unique variables that looking at a `countplot` becomes a bit difficult, so we won't. What we can do instead is just manually look at the info for the cluster info (if we so desire).
-
-
-```python
-def pick_cluster(df_in, feature, num_clust):
-    df_out = df_in[df_in[feature] == num_clust]
-    return df_out
-```
-
-
-```python
-# create empty lists for the cluster info
-cluster_cao = []
-cluster_huang = []
-# for loop for num of k
-for i in range(1,5):
-    # fill list with dataframe that passes condition on number of k
-    cluster_cao.append(pick_cluster(combinedDf, "cluster_predicted_cao", i))
-    cluster_huang.append(pick_cluster(combinedDf, "cluster_predicted_huang", i))
-
-cluster_cao[0].info()
-```
-
-    <class 'pandas.core.frame.DataFrame'>
-    Int64Index: 172 entries, 8 to 1084
-    Data columns (total 6 columns):
-     #   Column                   Non-Null Count  Dtype
-    ---  ------                   --------------  -----
-     0   CountryISO3              172 non-null    object
-     1   InCountryPartner         172 non-null    object
-     2   Species                  172 non-null    object
-     3   TotCupGrade              172 non-null    object
-     4   cluster_predicted_cao    172 non-null    uint16
-     5   cluster_predicted_huang  172 non-null    uint16
-    dtypes: object(4), uint16(2)
-    memory usage: 7.4+ KB
-
-
-
-```python
-cluster_huang[0].info()
-```
-
-    <class 'pandas.core.frame.DataFrame'>
-    Int64Index: 627 entries, 10 to 1242
-    Data columns (total 6 columns):
-     #   Column                   Non-Null Count  Dtype
-    ---  ------                   --------------  -----
-     0   CountryISO3              627 non-null    object
-     1   InCountryPartner         627 non-null    object
-     2   Species                  627 non-null    object
-     3   TotCupGrade              627 non-null    object
-     4   cluster_predicted_cao    627 non-null    uint16
-     5   cluster_predicted_huang  627 non-null    uint16
-    dtypes: object(4), uint16(2)
-    memory usage: 26.9+ KB
-
-
-We can see that for cluster 0 for the Cao method there are 172 rows, whereas that same cluster has 401 objects for the Huang method. We could tell that the clusters would be different from the countplot, but this way we can see how many objects there are, and could look at the unique values in each cluster. It seems with the categorical data we wwere able to create more clusters than with the numerical data.
-
-It is possible to combine numerical and categorical data in Kprototype clustering, but due to our poor Kmeans clustering I opted not to perform Kprototype clustering.
-
-## 3.3 Supervised ML
-This is our final section of data mining, and it will include two supervised machine learning models: SVM (support vector machine) and Decision tree. I would like to test SVM to see how this method of clustering performs when compared to our logistic regression results, and the Decision tree could possibly predict values of responses (in this case, our Coffee Grades) by learning decision rules derived from the features of the dataset.
-
-### SVM
-SVM offers very high accuracy when compared to other classifiers (e.g. logistic regression or decision trees). SVM works by separating data points using a hyperplane with the largest amount of margin and then it finds an optimal hyperplane. this hyperplane helps in classifying new data points. There are several kernels that you can use: linear, polynomial, and radial based function.
-
-I am only going to use the numerical data, and I need to split it into the training and test sets.
-
-
-```python
-# numerical data for SVM
-data_num_svm = df_combined_cleaned.select_dtypes(exclude={'object', 'datetime'})
-# categorical data for SVM
-data_cat_svm = df_combined_cleaned.select_dtypes(include={'object'})
-# create a copy of our data
-data_cat_svm_copy = data_cat_svm.copy()
-# encode our categorical data
-data_cat_svm = data_cat_svm.apply(le.fit_transform)
-# combine data
-data_comb_svm = pd.concat([data_num_svm, data_cat_svm], axis=1, sort=False)
-# drop numerical grades
-data_comb_svm.drop(["TotCupPts"], axis=1, inplace=True)
-
-# all data that is not y, or is not the target
-X = data_comb_svm.loc[:, data_comb_svm.columns != 'TotCupGrade']
-# only the target
-y = data_comb_svm.loc[:, data_comb_svm.columns == 'TotCupGrade'].astype(float)
-# Split dataset into training set and test set
-# 70% training and 30% test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state = 666)
-```
-
-
-```python
-#Create a svm Classifier for several kernels
-clf_list = []
-for kernel in ('linear', 'poly', 'rbf'):
-    clf_list.append(svm.SVC(kernel = kernel))
-```
-
-
-```python
-y_pred = []
-for i in range(0,3):
-    # train the model using the training sets
-    clf_list[i].fit(X_train, y_train)
-    # predict the response for test dataset
-    y_pred.append(clf_list[i].predict(X_test))
-    # print out the accuracy, precision, and recall for each kernel
-    if(i == 0):
-        print("Accuracy for linear kernel: ", metrics.accuracy_score(y_test, y_pred[i]))
-        print("Precision for linear kernel:\n", metrics.precision_score(y_test, y_pred[i], average = None))
-        print("Recall for linear kernel:\n", metrics.recall_score(y_test, y_pred[i], average = None))
-        print("*" * 100)
-    elif(i == 1):
-        print("Accuracy for polynomial kernel: ", metrics.accuracy_score(y_test, y_pred[i]))
-        print("Precision for polynomial kernel:\n", metrics.precision_score(y_test, y_pred[i], average = None))
-        print("Recall for polynomial kernel:\n", metrics.recall_score(y_test, y_pred[i], average = None))
-        print("*" * 100)
-    elif(i == 2):
-        print("Accuracy for radial based function kernel: ", metrics.accuracy_score(y_test, y_pred[i]))
-        print("Precision for radial based function kernel:\n", metrics.precision_score(y_test, y_pred[i], average = None))
-        print("Recall for radial based function kernel:\n", metrics.recall_score(y_test, y_pred[i], average = None))
-        print("*" * 100)
-    else:
-        pass
-```
-
-    Accuracy for linear kernel:  0.9490616621983914
-    Precision for linear kernel:
-     [0.         0.96153846 0.83333333 0.96747967 0.88888889 0.875
-     0.5        0.         0.        ]
-    Recall for linear kernel:
-     [0.         1.         0.55555556 0.94444444 1.         0.84
-     0.33333333 0.         0.        ]
-    ****************************************************************************************************
-    Accuracy for polynomial kernel:  0.8525469168900804
-    Precision for polynomial kernel:
-     [0.         0.90740741 0.6        0.83333333 0.6        0.46153846
-     0.         0.         0.         0.        ]
-    Recall for polynomial kernel:
-     [0.         0.98       0.33333333 0.87301587 0.375      0.24
-     0.         0.         0.         0.        ]
-    ****************************************************************************************************
-    Accuracy for radial based function kernel:  0.6032171581769437
-    Precision for radial based function kernel:
-     [0.         0.64419476 0.         0.5        0.         0.
-     0.         0.        ]
-    Recall for radial based function kernel:
-     [0.         0.86       0.         0.42063492 0.         0.
-     0.         0.        ]
-    ****************************************************************************************************
-
-
-The best kernel to use is linear, as seen above. It has the highest accuracy, precision (measure of result relevancy), and recall (measure of how many truly relevant results are returned). The Precision-Recall metric is used to evaluate classifier output quality and is a useful measure of success of prediction when the classes are very imbalanced. The linear kernel is more accurate than our logistic regression model from earlier. We can look at the confusion matrix for the accuracy for each coffee grade.
-
-
-```python
-# plot non-normalized and normalized confusion matrices
-titles_options = [("Confusion matrix\nwithout normalization\nSVM with linear kernel", None),
-                  ("Normalized confusion matrix\nSVM with linear kernel", 'true')]
-for title, normalize in titles_options:
-    # clf_list[0] = linear kernel
-    disp = plot_confusion_matrix(clf_list[0], X_test, y_test,
-                                 cmap = plt.cm.YlGnBu,
-                                 normalize = normalize)
-    disp.ax_.set_title(title)
-
-plt.show()
-```
-
-
-
-![png](code_output_files/code_output_145_0.png)
-
-
-
-
-
-![png](code_output_files/code_output_145_1.png)
-
-
-
-### Decision Tree
-
-Decision trees are quite convenient for their human-readability and ease to understand. There are flowchart-like trees where the nodes represent features and a branch represents a decision rule. The leaf nodes represent an outcome (in our case, we would like to find the coffee grade outcomes). The tree partitions on the basis of attribution values, and we can see what grades we will get based on what attributes and rules.
-
-Decision trees can handle both categorical and numerical variables at the same time as features, and we can use the same `X` and `y` dataframes as in SVM. We have also previously split the data into our test and train sets, and will simply use those again. This means we can also compare the results of the Decision tree model to the SVM (linear kernel) model.
-
-
-```python
-# Decision Tree classifer object
-clf_DF = DecisionTreeClassifier()
-
-# train Decision Tree Classifer
-clf_DF = clf_DF.fit(X_train, y_train)
-
-# predict the response for test dataset
-y_pred_DF = clf_DF.predict(X_test)
-
-# print out performance metrics
-print("Accuracy for Decision tree: ", metrics.accuracy_score(y_test, y_pred_DF))
-print("Precision for Decision tree:\n", metrics.precision_score(y_test, y_pred_DF, average = None))
-print("Recall for Decision tree:\n", metrics.recall_score(y_test, y_pred_DF, average = None))
-```
-
-    Accuracy for Decision tree:  0.8257372654155496
-    Precision for Decision tree:
-     [0.         0.89268293 0.75       0.796875   0.42857143 0.56521739
-     1.         0.         0.        ]
-    Recall for Decision tree:
-     [0.         0.915      0.66666667 0.80952381 0.375      0.52
-     0.33333333 0.         0.        ]
-
-
-Our accuracy is a little worse than the linear kernel for SVM, but it is still pretty good. Let's display this tree to see our results.
-
-
-```python
-dot_data = io.StringIO()
-export_graphviz(clf_DF, out_file = dot_data,
-                filled = True, rounded = True,
-                special_characters = True)
-graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-graph.write_png('decision_tree.png')
-Image(graph.create_png())
-```
-
-
-
-
-
-![png](code_output_files/code_output_150_0.png)
-
-
-
-
-
-```python
-X_features = list(X.columns)
-for i in range(1, len(X_features)):
-    print("Feature X_", i, " is: ", X_features[i])
-```
-
-    Feature X_ 1  is:  Aftertaste
-    Feature X_ 2  is:  Aroma
-    Feature X_ 3  is:  Balance
-    Feature X_ 4  is:  Body
-    Feature X_ 5  is:  Cat1Defects
-    Feature X_ 6  is:  Cat2Defects
-    Feature X_ 7  is:  CleanCup
-    Feature X_ 8  is:  CupperPoints
-    Feature X_ 9  is:  Flavor
-    Feature X_ 10  is:  Moisture
-    Feature X_ 11  is:  Quakers
-    Feature X_ 12  is:  Sweetness
-    Feature X_ 13  is:  Uniformity
-    Feature X_ 14  is:  CountryISO3
-    Feature X_ 15  is:  InCountryPartner
-    Feature X_ 16  is:  Species
-
-
-
-```python
-y_features = df_combined_cleaned.TotCupGrade.unique()
-y_features
-```
-
-
 
 
-    array(['A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'],
+    array(['Brooklyn', 'Staten Island', 'Manhattan', 'Queens', 'Bronx', nan],
           dtype=object)
 
 
 
-This is a very complex tree! I needed to save it as a png file just to be able to read the nodes, branches, and leaves. There is a `value` row in each node, which has `X1` or `X2` and so on. These are our features, and there is a rule that is either true or false (as specified by the branch). For example, our `root` node is `X8 <= 7.46`, which means that we have a score where the `CupperPoints` are less than or equal to 7.46. There are 870 samples, and the branches split where this statement is true or false. This is a fairly complex tree, and has an accuracy of about 83%. The leaf nodes has a line that states `value = []` where the array has zeros and then some non-zero values. This indicates to you what grade is at that leaf. This means that if you have followed the nodes and the decision branches to that leaf, then the decision tree is saying you have a specific target value (grade). If a leaf node has `value = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0]` this means one sample has reached this leaf, and that it has a grade of D-.
+Okay, it looks like that worked! We now have the borough associated with the precincts. 
+
+## Census Data
+<a id = "census"></a>
+
+Now let's import the `County Population by Characteristics: 2010-2019` from <a href="https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-detail.html">The US Census</a>. This data contains the Annual County Resident Population Estimates by Age, Sex, Race, and Hispanic Origin from April 1, 2010 to July 1, 2019 (`cc-est2019-alldata-36.csv`). This csv file is going to need serious reformatting to get the information that I want, but it will be interesting to see the demographics of the boroughs and what conclusions we can draw when compared to the NYPC officer complaints.
+
+
+```python
+# get path of cc-est2019-alldata-36.csv
+census_path = os.path.join(path, "archive/", "cc-est2019-alldata-36.csv")
+# create dataframe from the csv
+df_census = pd.read_csv(census_path)
+# look at top of csv
+df_census.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SUMLEV</th>
+      <th>STATE</th>
+      <th>COUNTY</th>
+      <th>STNAME</th>
+      <th>CTYNAME</th>
+      <th>YEAR</th>
+      <th>AGEGRP</th>
+      <th>TOT_POP</th>
+      <th>TOT_MALE</th>
+      <th>TOT_FEMALE</th>
+      <th>...</th>
+      <th>HWAC_MALE</th>
+      <th>HWAC_FEMALE</th>
+      <th>HBAC_MALE</th>
+      <th>HBAC_FEMALE</th>
+      <th>HIAC_MALE</th>
+      <th>HIAC_FEMALE</th>
+      <th>HAAC_MALE</th>
+      <th>HAAC_FEMALE</th>
+      <th>HNAC_MALE</th>
+      <th>HNAC_FEMALE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>50</td>
+      <td>36</td>
+      <td>1</td>
+      <td>New York</td>
+      <td>Albany County</td>
+      <td>1</td>
+      <td>0</td>
+      <td>304204</td>
+      <td>147076</td>
+      <td>157128</td>
+      <td>...</td>
+      <td>5236</td>
+      <td>5416</td>
+      <td>2125</td>
+      <td>2295</td>
+      <td>361</td>
+      <td>410</td>
+      <td>139</td>
+      <td>141</td>
+      <td>41</td>
+      <td>41</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>36</td>
+      <td>1</td>
+      <td>New York</td>
+      <td>Albany County</td>
+      <td>1</td>
+      <td>1</td>
+      <td>15286</td>
+      <td>7821</td>
+      <td>7465</td>
+      <td>...</td>
+      <td>488</td>
+      <td>514</td>
+      <td>288</td>
+      <td>277</td>
+      <td>44</td>
+      <td>40</td>
+      <td>18</td>
+      <td>12</td>
+      <td>5</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>50</td>
+      <td>36</td>
+      <td>1</td>
+      <td>New York</td>
+      <td>Albany County</td>
+      <td>1</td>
+      <td>2</td>
+      <td>16131</td>
+      <td>8224</td>
+      <td>7907</td>
+      <td>...</td>
+      <td>452</td>
+      <td>443</td>
+      <td>275</td>
+      <td>258</td>
+      <td>31</td>
+      <td>36</td>
+      <td>15</td>
+      <td>11</td>
+      <td>5</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>50</td>
+      <td>36</td>
+      <td>1</td>
+      <td>New York</td>
+      <td>Albany County</td>
+      <td>1</td>
+      <td>3</td>
+      <td>17639</td>
+      <td>9065</td>
+      <td>8574</td>
+      <td>...</td>
+      <td>448</td>
+      <td>435</td>
+      <td>230</td>
+      <td>204</td>
+      <td>33</td>
+      <td>28</td>
+      <td>13</td>
+      <td>12</td>
+      <td>2</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>50</td>
+      <td>36</td>
+      <td>1</td>
+      <td>New York</td>
+      <td>Albany County</td>
+      <td>1</td>
+      <td>4</td>
+      <td>23752</td>
+      <td>11925</td>
+      <td>11827</td>
+      <td>...</td>
+      <td>632</td>
+      <td>627</td>
+      <td>271</td>
+      <td>283</td>
+      <td>50</td>
+      <td>46</td>
+      <td>16</td>
+      <td>15</td>
+      <td>4</td>
+      <td>6</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 80 columns</p>
+</div>
+
+
+
+
+```python
+df_census.shape
+```
+
+
+
+
+    (14136, 80)
+
+
+
+According to the key for the YEAR variable, a year of 12 means a 7/1/2019 population estimate. We will only look at the 2019 estimates. We will also only be looking at the 5 boroughs. However, this data is sorted by county name, meaning we will need to look at the Bronx County (Bronx),  Kings County (Brooklyn), Queens County (Queens), New York County (Manhattan), and Richmond County (Staten Island). An Age Group of 0 is the population across all ages, which will also be the only age group that we will keep. There are a few columns that I will be combing as well, but first let's reduce the rows before tackling the columns.
+
+
+```python
+# filter for 2019 data
+df_census = df_census[df_census["YEAR"] == 12] 
+# filter for all combined age groups
+df_census = df_census[df_census["AGEGRP"] == 0]
+# condition for the relevant counties
+condition_counties = [
+    "Bronx County", 
+    "Kings County",
+    "Queens County",
+    "New York County",
+    "Richmond County"
+]
+# loop through counties
+df_counties = pd.DataFrame(columns = list(df_census.columns))
+for i in range(len(condition_counties)):
+    df_temp = df_census[df_census["CTYNAME"] == condition_counties[i]]
+    df_counties = pd.concat([df_counties, df_temp], ignore_index=True)
+df_counties
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SUMLEV</th>
+      <th>STATE</th>
+      <th>COUNTY</th>
+      <th>STNAME</th>
+      <th>CTYNAME</th>
+      <th>YEAR</th>
+      <th>AGEGRP</th>
+      <th>TOT_POP</th>
+      <th>TOT_MALE</th>
+      <th>TOT_FEMALE</th>
+      <th>...</th>
+      <th>HWAC_MALE</th>
+      <th>HWAC_FEMALE</th>
+      <th>HBAC_MALE</th>
+      <th>HBAC_FEMALE</th>
+      <th>HIAC_MALE</th>
+      <th>HIAC_FEMALE</th>
+      <th>HAAC_MALE</th>
+      <th>HAAC_FEMALE</th>
+      <th>HNAC_MALE</th>
+      <th>HNAC_FEMALE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>50</td>
+      <td>36</td>
+      <td>5</td>
+      <td>New York</td>
+      <td>Bronx County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>1418207</td>
+      <td>669548</td>
+      <td>748659</td>
+      <td>...</td>
+      <td>254417</td>
+      <td>283816</td>
+      <td>110369</td>
+      <td>127199</td>
+      <td>24227</td>
+      <td>26648</td>
+      <td>5061</td>
+      <td>5348</td>
+      <td>3479</td>
+      <td>3915</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>36</td>
+      <td>47</td>
+      <td>New York</td>
+      <td>Kings County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>2559903</td>
+      <td>1212194</td>
+      <td>1347709</td>
+      <td>...</td>
+      <td>171663</td>
+      <td>178258</td>
+      <td>55280</td>
+      <td>64253</td>
+      <td>12836</td>
+      <td>12815</td>
+      <td>4048</td>
+      <td>4454</td>
+      <td>1686</td>
+      <td>1614</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>50</td>
+      <td>36</td>
+      <td>81</td>
+      <td>New York</td>
+      <td>Queens County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>2253858</td>
+      <td>1093889</td>
+      <td>1159969</td>
+      <td>...</td>
+      <td>268254</td>
+      <td>266116</td>
+      <td>37355</td>
+      <td>39703</td>
+      <td>15320</td>
+      <td>13754</td>
+      <td>7247</td>
+      <td>7353</td>
+      <td>2010</td>
+      <td>1988</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>50</td>
+      <td>36</td>
+      <td>61</td>
+      <td>New York</td>
+      <td>New York County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>1628706</td>
+      <td>771478</td>
+      <td>857228</td>
+      <td>...</td>
+      <td>145445</td>
+      <td>156774</td>
+      <td>48264</td>
+      <td>56355</td>
+      <td>11435</td>
+      <td>12356</td>
+      <td>4042</td>
+      <td>4569</td>
+      <td>1515</td>
+      <td>1692</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>50</td>
+      <td>36</td>
+      <td>85</td>
+      <td>New York</td>
+      <td>Richmond County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>476143</td>
+      <td>231330</td>
+      <td>244813</td>
+      <td>...</td>
+      <td>36610</td>
+      <td>37037</td>
+      <td>6094</td>
+      <td>6982</td>
+      <td>1756</td>
+      <td>1652</td>
+      <td>789</td>
+      <td>776</td>
+      <td>277</td>
+      <td>259</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 80 columns</p>
+</div>
+
+
+
+Okay! We've reduced the rows from 14136 to just 5: the 5 boroughs for population esitmates in 2019 for all age groups. Now I need to combine certain columns. For example, they have `WAC_MALE`/`WAC_FEMALE` (White alone or in combination male/female population), and `WA_MALE`/`WA_FEMALE` (White alone male/female population). i only want the alone or in combination for every race. I will also be creating a column that is the total alone and combined population for both male and female for each race. We also have columns for `Not-Hispanic` and `Hispanic`. This could be useful information to see if, perhaps, individuals that are Hispanic are targeted more, but the original complaints data includes race but not if a person is Hispanic or not. I will exclude these columns.
+
+
+```python
+df_counties.columns
+```
+
+
+
+
+    Index(['SUMLEV', 'STATE', 'COUNTY', 'STNAME', 'CTYNAME', 'YEAR', 'AGEGRP',
+           'TOT_POP', 'TOT_MALE', 'TOT_FEMALE', 'WA_MALE', 'WA_FEMALE', 'BA_MALE',
+           'BA_FEMALE', 'IA_MALE', 'IA_FEMALE', 'AA_MALE', 'AA_FEMALE', 'NA_MALE',
+           'NA_FEMALE', 'TOM_MALE', 'TOM_FEMALE', 'WAC_MALE', 'WAC_FEMALE',
+           'BAC_MALE', 'BAC_FEMALE', 'IAC_MALE', 'IAC_FEMALE', 'AAC_MALE',
+           'AAC_FEMALE', 'NAC_MALE', 'NAC_FEMALE', 'NH_MALE', 'NH_FEMALE',
+           'NHWA_MALE', 'NHWA_FEMALE', 'NHBA_MALE', 'NHBA_FEMALE', 'NHIA_MALE',
+           'NHIA_FEMALE', 'NHAA_MALE', 'NHAA_FEMALE', 'NHNA_MALE', 'NHNA_FEMALE',
+           'NHTOM_MALE', 'NHTOM_FEMALE', 'NHWAC_MALE', 'NHWAC_FEMALE',
+           'NHBAC_MALE', 'NHBAC_FEMALE', 'NHIAC_MALE', 'NHIAC_FEMALE',
+           'NHAAC_MALE', 'NHAAC_FEMALE', 'NHNAC_MALE', 'NHNAC_FEMALE', 'H_MALE',
+           'H_FEMALE', 'HWA_MALE', 'HWA_FEMALE', 'HBA_MALE', 'HBA_FEMALE',
+           'HIA_MALE', 'HIA_FEMALE', 'HAA_MALE', 'HAA_FEMALE', 'HNA_MALE',
+           'HNA_FEMALE', 'HTOM_MALE', 'HTOM_FEMALE', 'HWAC_MALE', 'HWAC_FEMALE',
+           'HBAC_MALE', 'HBAC_FEMALE', 'HIAC_MALE', 'HIAC_FEMALE', 'HAAC_MALE',
+           'HAAC_FEMALE', 'HNAC_MALE', 'HNAC_FEMALE'],
+          dtype='object')
+
+
+
+It looks like every alone or combined population column has `AC_` in the title, which is what I'll use to filter the columns. The not Hispanic columns start with `NH` and the Hispanic columns start with `H`. I'll also exclude those. 
+
+
+```python
+# search for the specific substring
+substring1 = "AC_"
+substring2 = "TOM_"
+# create empty list
+columns_AC = [None] * len(df_counties.columns)
+for i in range(len(df_counties.columns)):
+    # check if "AC_" is in the column name and it does not start with `NH` or `H`
+    if (
+        (substring1 in df_counties.columns[i] or substring2 in df_counties.columns[i])  
+        and df_counties.columns[i].startswith("NH") == False 
+        and df_counties.columns[i].startswith("H") == False):
+        # add to list if yes
+        columns_AC[i] = df_counties.columns[i]
+    else:
+        # NAN if not found
+        columns_AC[i] = "NAN"
+# remove NANs from list
+columns_AC = [x for x in columns_AC if str(x) != "NAN"]
+# print first 5 results from list
+columns_AC[:5]
+```
+
+
+
+
+    ['TOM_MALE', 'TOM_FEMALE', 'WAC_MALE', 'WAC_FEMALE', 'BAC_MALE']
+
+
+
+We need to also keep a few of the other columns in our data, such as the county name.
+
+
+```python
+# first few columns from original dataset
+first_cols = ['SUMLEV', 'STATE', 'COUNTY', 'STNAME', 'CTYNAME', 'YEAR', 'AGEGRP', 'TOT_POP', 'TOT_MALE', 'TOT_FEMALE']
+first_cols.reverse()
+# loop through and instert these into the list
+for i in first_cols:
+    columns_AC.insert(0, i)
+columns_AC[:5]
+```
+
+
+
+
+    ['SUMLEV', 'STATE', 'COUNTY', 'STNAME', 'CTYNAME']
+
+
+
+
+```python
+# keep only the columns that are in the list
+df_counties = df_counties[columns_AC]
+df_counties
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SUMLEV</th>
+      <th>STATE</th>
+      <th>COUNTY</th>
+      <th>STNAME</th>
+      <th>CTYNAME</th>
+      <th>YEAR</th>
+      <th>AGEGRP</th>
+      <th>TOT_POP</th>
+      <th>TOT_MALE</th>
+      <th>TOT_FEMALE</th>
+      <th>...</th>
+      <th>WAC_MALE</th>
+      <th>WAC_FEMALE</th>
+      <th>BAC_MALE</th>
+      <th>BAC_FEMALE</th>
+      <th>IAC_MALE</th>
+      <th>IAC_FEMALE</th>
+      <th>AAC_MALE</th>
+      <th>AAC_FEMALE</th>
+      <th>NAC_MALE</th>
+      <th>NAC_FEMALE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>50</td>
+      <td>36</td>
+      <td>5</td>
+      <td>New York</td>
+      <td>Bronx County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>1418207</td>
+      <td>669548</td>
+      <td>748659</td>
+      <td>...</td>
+      <td>321774</td>
+      <td>353945</td>
+      <td>309177</td>
+      <td>354397</td>
+      <td>28052</td>
+      <td>31239</td>
+      <td>34585</td>
+      <td>36813</td>
+      <td>4297</td>
+      <td>4847</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>50</td>
+      <td>36</td>
+      <td>47</td>
+      <td>New York</td>
+      <td>Kings County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>2559903</td>
+      <td>1212194</td>
+      <td>1347709</td>
+      <td>...</td>
+      <td>651056</td>
+      <td>676707</td>
+      <td>404476</td>
+      <td>503891</td>
+      <td>19628</td>
+      <td>20878</td>
+      <td>169645</td>
+      <td>182853</td>
+      <td>3724</td>
+      <td>4003</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>50</td>
+      <td>36</td>
+      <td>81</td>
+      <td>New York</td>
+      <td>Queens County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>2253858</td>
+      <td>1093889</td>
+      <td>1159969</td>
+      <td>...</td>
+      <td>558054</td>
+      <td>564330</td>
+      <td>233757</td>
+      <td>273631</td>
+      <td>23842</td>
+      <td>22858</td>
+      <td>309718</td>
+      <td>332162</td>
+      <td>5032</td>
+      <td>5447</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>50</td>
+      <td>36</td>
+      <td>61</td>
+      <td>New York</td>
+      <td>New York County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>1628706</td>
+      <td>771478</td>
+      <td>857228</td>
+      <td>...</td>
+      <td>530574</td>
+      <td>569504</td>
+      <td>149738</td>
+      <td>173474</td>
+      <td>15222</td>
+      <td>16994</td>
+      <td>102176</td>
+      <td>128276</td>
+      <td>2509</td>
+      <td>2874</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>50</td>
+      <td>36</td>
+      <td>85</td>
+      <td>New York</td>
+      <td>Richmond County</td>
+      <td>12</td>
+      <td>0</td>
+      <td>476143</td>
+      <td>231330</td>
+      <td>244813</td>
+      <td>...</td>
+      <td>177474</td>
+      <td>185845</td>
+      <td>28825</td>
+      <td>32815</td>
+      <td>2812</td>
+      <td>2816</td>
+      <td>27421</td>
+      <td>28756</td>
+      <td>497</td>
+      <td>476</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 22 columns</p>
+</div>
+
+
+
+
+```python
+def insert_colum_location(df_in, ethnicity):
+    """
+    function to add the male and female populations for a specified ethnicity 
+    and then inserts this total as a new column right after the FEMALE column for said ethnicity
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    ethnicity: ethnicity as a single character 
+        W for white, 
+        B for Black, 
+        I for American Indian and Alaska Native, 
+        A for Asian, 
+        N for Native Hawaiian and Other Pacific Islander, and
+        TOM for Two or More Races
+    
+    Returns
+    ----------
+    df_in: dataframe with the new column
+    """
+    # column names
+    if ethnicity == "TOM":
+        male = ethnicity + "_MALE"
+        female = ethnicity + "_FEMALE"
+        tot = ethnicity + "_TOT"
+    else:
+        male = ethnicity + "AC_MALE"
+        female = ethnicity + "AC_FEMALE"
+        tot = ethnicity + "AC_TOT"
+    
+    # add male and female populations for specific ethnicity
+    total_vals = df_in[male] + df_in[female]
+    
+    # insert location
+    insert_loc = df_in.columns.get_loc(female)+1
+    
+    # insert series into dataframe
+    df_in.insert(insert_loc, tot, total_vals)
+    
+    return df_in
+```
+
+
+```python
+# list of all possible ethnicities
+ethnicities_list = ["W", "B", "I", "A", "N", "TOM"]
+# loop thru this list
+for i in ethnicities_list:
+    # call the above function with the specific ethnicity and our dataframe
+    df_counties = insert_colum_location(df_counties, i)
+```
+
+
+```python
+# list of the 5 boroughs
+boroughs_list = ["Bronx", "Brooklyn", "Queens", "Manhattan", "Staten Island"]
+# location of county names
+insert_bor = df_counties.columns.get_loc("CTYNAME")+1
+# insert boroughs
+df_counties.insert(insert_bor, "BOROUGH", boroughs_list)
+# delete unnecessary columns
+del df_counties["SUMLEV"]
+del df_counties["STATE"]
+del df_counties["AGEGRP"]
+del df_counties["YEAR"]
+# location of BOROUGH
+insert_yr = df_counties.columns.get_loc("BOROUGH")+1
+# insert year
+df_counties.insert(insert_yr, "YEAR", 2019)
+# change time of year to int
+df_counties = df_counties.astype({"YEAR": int})
+```
+
+
+```python
+df_counties
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>COUNTY</th>
+      <th>STNAME</th>
+      <th>CTYNAME</th>
+      <th>BOROUGH</th>
+      <th>YEAR</th>
+      <th>TOT_POP</th>
+      <th>TOT_MALE</th>
+      <th>TOT_FEMALE</th>
+      <th>TOM_MALE</th>
+      <th>TOM_FEMALE</th>
+      <th>...</th>
+      <th>BAC_TOT</th>
+      <th>IAC_MALE</th>
+      <th>IAC_FEMALE</th>
+      <th>IAC_TOT</th>
+      <th>AAC_MALE</th>
+      <th>AAC_FEMALE</th>
+      <th>AAC_TOT</th>
+      <th>NAC_MALE</th>
+      <th>NAC_FEMALE</th>
+      <th>NAC_TOT</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>5</td>
+      <td>New York</td>
+      <td>Bronx County</td>
+      <td>Bronx</td>
+      <td>2019</td>
+      <td>1418207</td>
+      <td>669548</td>
+      <td>748659</td>
+      <td>24883</td>
+      <td>28508</td>
+      <td>...</td>
+      <td>663574</td>
+      <td>28052</td>
+      <td>31239</td>
+      <td>59291</td>
+      <td>34585</td>
+      <td>36813</td>
+      <td>71398</td>
+      <td>4297</td>
+      <td>4847</td>
+      <td>9144</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>47</td>
+      <td>New York</td>
+      <td>Kings County</td>
+      <td>Brooklyn</td>
+      <td>2019</td>
+      <td>2559903</td>
+      <td>1212194</td>
+      <td>1347709</td>
+      <td>33203</td>
+      <td>36965</td>
+      <td>...</td>
+      <td>908367</td>
+      <td>19628</td>
+      <td>20878</td>
+      <td>40506</td>
+      <td>169645</td>
+      <td>182853</td>
+      <td>352498</td>
+      <td>3724</td>
+      <td>4003</td>
+      <td>7727</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>81</td>
+      <td>New York</td>
+      <td>Queens County</td>
+      <td>Queens</td>
+      <td>2019</td>
+      <td>2253858</td>
+      <td>1093889</td>
+      <td>1159969</td>
+      <td>33428</td>
+      <td>34939</td>
+      <td>...</td>
+      <td>507388</td>
+      <td>23842</td>
+      <td>22858</td>
+      <td>46700</td>
+      <td>309718</td>
+      <td>332162</td>
+      <td>641880</td>
+      <td>5032</td>
+      <td>5447</td>
+      <td>10479</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>61</td>
+      <td>New York</td>
+      <td>New York County</td>
+      <td>Manhattan</td>
+      <td>2019</td>
+      <td>1628706</td>
+      <td>771478</td>
+      <td>857228</td>
+      <td>25779</td>
+      <td>30180</td>
+      <td>...</td>
+      <td>323212</td>
+      <td>15222</td>
+      <td>16994</td>
+      <td>32216</td>
+      <td>102176</td>
+      <td>128276</td>
+      <td>230452</td>
+      <td>2509</td>
+      <td>2874</td>
+      <td>5383</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>85</td>
+      <td>New York</td>
+      <td>Richmond County</td>
+      <td>Staten Island</td>
+      <td>2019</td>
+      <td>476143</td>
+      <td>231330</td>
+      <td>244813</td>
+      <td>5170</td>
+      <td>5259</td>
+      <td>...</td>
+      <td>61640</td>
+      <td>2812</td>
+      <td>2816</td>
+      <td>5628</td>
+      <td>27421</td>
+      <td>28756</td>
+      <td>56177</td>
+      <td>497</td>
+      <td>476</td>
+      <td>973</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 26 columns</p>
+</div>
+
+
+
+
+```python
+df_counties.columns
+```
+
+
+
+
+    Index(['COUNTY', 'STNAME', 'CTYNAME', 'BOROUGH', 'YEAR', 'TOT_POP', 'TOT_MALE',
+           'TOT_FEMALE', 'TOM_MALE', 'TOM_FEMALE', 'TOM_TOT', 'WAC_MALE',
+           'WAC_FEMALE', 'WAC_TOT', 'BAC_MALE', 'BAC_FEMALE', 'BAC_TOT',
+           'IAC_MALE', 'IAC_FEMALE', 'IAC_TOT', 'AAC_MALE', 'AAC_FEMALE',
+           'AAC_TOT', 'NAC_MALE', 'NAC_FEMALE', 'NAC_TOT'],
+          dtype='object')
+
+
+
+Great! That worked. We now have only the columns and rows we need from the census data.
+
+### New York City Population by Borough, 1950 - 2040
+<a id = "nyopen"></a>
+
+The Department of City Planning (DCP) in the city of New York has provided the unadjusted decennial census data from 1950-2000 and projected figures from 2010-2040: summary table of New York City population numbers and percentage share by Borough, including school-age (5 to 17), 65 and Over, and total population. This data can be found on <a href="https://data.cityofnewyork.us/City-Government/New-York-City-Population-by-Borough-1950-2040/xywu-7bv9">the city of New York website</a>. The data was last updated on February 7, 2020, and does not include the racial breakdown of the population but will be useful for when we check how the number of complaints changes over the years in comparison to the population changes.
+
+
+```python
+# get path of New_York_City_Population_by_Borough__1950_-_2040.csv
+nycpop_path = os.path.join(path, "archive/", "New_York_City_Population_by_Borough__1950_-_2040.csv")
+# create dataframe from the csv
+df_nycpop = pd.read_csv(nycpop_path)
+# look at top of csv
+df_nycpop.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Age Group</th>
+      <th>Borough</th>
+      <th>1950</th>
+      <th>1950 - Boro share of NYC total</th>
+      <th>1960</th>
+      <th>1960 - Boro share of NYC total</th>
+      <th>1970</th>
+      <th>1970 - Boro share of NYC total</th>
+      <th>1980</th>
+      <th>1980 - Boro share of NYC total</th>
+      <th>...</th>
+      <th>2000</th>
+      <th>2000 - Boro share of NYC total</th>
+      <th>2010</th>
+      <th>2010 - Boro share of NYC total</th>
+      <th>2020</th>
+      <th>2020 - Boro share of NYC total</th>
+      <th>2030</th>
+      <th>2030 - Boro share of NYC total</th>
+      <th>2040</th>
+      <th>2040 - Boro share of NYC total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Total Population</td>
+      <td>NYC Total</td>
+      <td>7891957</td>
+      <td>100.00</td>
+      <td>7781984</td>
+      <td>100.00</td>
+      <td>7894862</td>
+      <td>100.00</td>
+      <td>7071639</td>
+      <td>100.00</td>
+      <td>...</td>
+      <td>8008278</td>
+      <td>100.00</td>
+      <td>8242624</td>
+      <td>100.00</td>
+      <td>8550971</td>
+      <td>100.00</td>
+      <td>8821027</td>
+      <td>100.00</td>
+      <td>9025145</td>
+      <td>100.00</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Total Population</td>
+      <td>Bronx</td>
+      <td>1451277</td>
+      <td>18.39</td>
+      <td>1424815</td>
+      <td>18.31</td>
+      <td>1471701</td>
+      <td>18.64</td>
+      <td>1168972</td>
+      <td>16.53</td>
+      <td>...</td>
+      <td>1332650</td>
+      <td>16.64</td>
+      <td>1385108</td>
+      <td>16.80</td>
+      <td>1446788</td>
+      <td>16.92</td>
+      <td>1518998</td>
+      <td>17.22</td>
+      <td>1579245</td>
+      <td>17.50</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Total Population</td>
+      <td>Brooklyn</td>
+      <td>2738175</td>
+      <td>34.70</td>
+      <td>2627319</td>
+      <td>33.76</td>
+      <td>2602012</td>
+      <td>32.96</td>
+      <td>2230936</td>
+      <td>31.55</td>
+      <td>...</td>
+      <td>2465326</td>
+      <td>30.78</td>
+      <td>2552911</td>
+      <td>30.97</td>
+      <td>2648452</td>
+      <td>30.97</td>
+      <td>2754009</td>
+      <td>31.22</td>
+      <td>2840525</td>
+      <td>31.47</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Total Population</td>
+      <td>Manhattan</td>
+      <td>1960101</td>
+      <td>24.84</td>
+      <td>1698281</td>
+      <td>21.82</td>
+      <td>1539233</td>
+      <td>19.50</td>
+      <td>1428285</td>
+      <td>20.20</td>
+      <td>...</td>
+      <td>1537195</td>
+      <td>19.20</td>
+      <td>1585873</td>
+      <td>19.24</td>
+      <td>1638281</td>
+      <td>19.16</td>
+      <td>1676720</td>
+      <td>19.01</td>
+      <td>1691617</td>
+      <td>18.74</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Total Population</td>
+      <td>Queens</td>
+      <td>1550849</td>
+      <td>19.65</td>
+      <td>1809578</td>
+      <td>23.25</td>
+      <td>1986473</td>
+      <td>25.16</td>
+      <td>1891325</td>
+      <td>26.75</td>
+      <td>...</td>
+      <td>2229379</td>
+      <td>27.84</td>
+      <td>2250002</td>
+      <td>27.30</td>
+      <td>2330295</td>
+      <td>27.25</td>
+      <td>2373551</td>
+      <td>26.91</td>
+      <td>2412649</td>
+      <td>26.73</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 22 columns</p>
+</div>
+
+
+
+This data is terribly formatted, we're going to need to adjust it alot.
+
+
+```python
+# make copy of nycpop data
+df_nycpop_copy = df_nycpop.copy(deep=True)
+# delete columns
+del df_nycpop_copy["Age Group"]
+# melt the data to convert columns to rows
+df_nycpop_copy.melt(id_vars=["Borough"], 
+        var_name = [], 
+        value_name = "Value")
+# show data
+df_nycpop_copy.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>1950</th>
+      <th>1950 - Boro share of NYC total</th>
+      <th>1960</th>
+      <th>1960 - Boro share of NYC total</th>
+      <th>1970</th>
+      <th>1970 - Boro share of NYC total</th>
+      <th>1980</th>
+      <th>1980 - Boro share of NYC total</th>
+      <th>1990</th>
+      <th>...</th>
+      <th>2000</th>
+      <th>2000 - Boro share of NYC total</th>
+      <th>2010</th>
+      <th>2010 - Boro share of NYC total</th>
+      <th>2020</th>
+      <th>2020 - Boro share of NYC total</th>
+      <th>2030</th>
+      <th>2030 - Boro share of NYC total</th>
+      <th>2040</th>
+      <th>2040 - Boro share of NYC total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>NYC Total</td>
+      <td>7891957</td>
+      <td>100.00</td>
+      <td>7781984</td>
+      <td>100.00</td>
+      <td>7894862</td>
+      <td>100.00</td>
+      <td>7071639</td>
+      <td>100.00</td>
+      <td>7322564</td>
+      <td>...</td>
+      <td>8008278</td>
+      <td>100.00</td>
+      <td>8242624</td>
+      <td>100.00</td>
+      <td>8550971</td>
+      <td>100.00</td>
+      <td>8821027</td>
+      <td>100.00</td>
+      <td>9025145</td>
+      <td>100.00</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Bronx</td>
+      <td>1451277</td>
+      <td>18.39</td>
+      <td>1424815</td>
+      <td>18.31</td>
+      <td>1471701</td>
+      <td>18.64</td>
+      <td>1168972</td>
+      <td>16.53</td>
+      <td>1203789</td>
+      <td>...</td>
+      <td>1332650</td>
+      <td>16.64</td>
+      <td>1385108</td>
+      <td>16.80</td>
+      <td>1446788</td>
+      <td>16.92</td>
+      <td>1518998</td>
+      <td>17.22</td>
+      <td>1579245</td>
+      <td>17.50</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Brooklyn</td>
+      <td>2738175</td>
+      <td>34.70</td>
+      <td>2627319</td>
+      <td>33.76</td>
+      <td>2602012</td>
+      <td>32.96</td>
+      <td>2230936</td>
+      <td>31.55</td>
+      <td>2300664</td>
+      <td>...</td>
+      <td>2465326</td>
+      <td>30.78</td>
+      <td>2552911</td>
+      <td>30.97</td>
+      <td>2648452</td>
+      <td>30.97</td>
+      <td>2754009</td>
+      <td>31.22</td>
+      <td>2840525</td>
+      <td>31.47</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Manhattan</td>
+      <td>1960101</td>
+      <td>24.84</td>
+      <td>1698281</td>
+      <td>21.82</td>
+      <td>1539233</td>
+      <td>19.50</td>
+      <td>1428285</td>
+      <td>20.20</td>
+      <td>1487536</td>
+      <td>...</td>
+      <td>1537195</td>
+      <td>19.20</td>
+      <td>1585873</td>
+      <td>19.24</td>
+      <td>1638281</td>
+      <td>19.16</td>
+      <td>1676720</td>
+      <td>19.01</td>
+      <td>1691617</td>
+      <td>18.74</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Queens</td>
+      <td>1550849</td>
+      <td>19.65</td>
+      <td>1809578</td>
+      <td>23.25</td>
+      <td>1986473</td>
+      <td>25.16</td>
+      <td>1891325</td>
+      <td>26.75</td>
+      <td>1951598</td>
+      <td>...</td>
+      <td>2229379</td>
+      <td>27.84</td>
+      <td>2250002</td>
+      <td>27.30</td>
+      <td>2330295</td>
+      <td>27.25</td>
+      <td>2373551</td>
+      <td>26.91</td>
+      <td>2412649</td>
+      <td>26.73</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 21 columns</p>
+</div>
+
+
+
+
+```python
+# create list from column names
+nypop_cols = df_nycpop_copy.columns.to_list()
+# get rid of first column
+nypop_cols.pop(0)
+# empty lists
+list_rawdat = ["nan"] * len(nypop_cols)
+list_remove = ["nan"] * len(nypop_cols)
+# sreach string
+substring_search = "- Boro share of NYC total"
+for i in range(len(nypop_cols)):
+    if substring_search in nypop_cols[i]:
+        list_remove[i] = nypop_cols[i]
+    else:
+        list_rawdat[i] = nypop_cols[i]
+# remove "nan" entries
+list_remove = [x for x in list_remove if str(x) != 'nan']
+list_rawdat = [x for x in list_rawdat if str(x) != 'nan']
+```
+
+
+```python
+# remove last 2 elements
+list_rawdat.pop(len(list_rawdat)-1)
+list_rawdat.pop(len(list_rawdat)-1)
+# check list
+list_rawdat
+```
+
+
+
+
+    ['1950', '1960', '1970', '1980', '1990', '2000', '2010', '2020']
+
+
+
+
+```python
+# add last two elements of previous list
+list_remove.append('2030')
+list_remove.append('2040')
+# check list
+list_remove
+```
+
+
+
+
+    ['1950 - Boro share of NYC total',
+     '1960 - Boro share of NYC total',
+     '1970 - Boro share of NYC total',
+     '1980 - Boro share of NYC total',
+     '1990 - Boro share of NYC total',
+     '2000 - Boro share of NYC total',
+     '2010 - Boro share of NYC total',
+     '2020 - Boro share of NYC total',
+     '2030 - Boro share of NYC total',
+     '2040 - Boro share of NYC total',
+     '2030',
+     '2040']
+
+
+
+
+```python
+# remove specified columns
+for i in list_remove:
+    del df_nycpop_copy[i]
+df_nycpop_copy
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>1950</th>
+      <th>1960</th>
+      <th>1970</th>
+      <th>1980</th>
+      <th>1990</th>
+      <th>2000</th>
+      <th>2010</th>
+      <th>2020</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>NYC Total</td>
+      <td>7891957</td>
+      <td>7781984</td>
+      <td>7894862</td>
+      <td>7071639</td>
+      <td>7322564</td>
+      <td>8008278</td>
+      <td>8242624</td>
+      <td>8550971</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Bronx</td>
+      <td>1451277</td>
+      <td>1424815</td>
+      <td>1471701</td>
+      <td>1168972</td>
+      <td>1203789</td>
+      <td>1332650</td>
+      <td>1385108</td>
+      <td>1446788</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Brooklyn</td>
+      <td>2738175</td>
+      <td>2627319</td>
+      <td>2602012</td>
+      <td>2230936</td>
+      <td>2300664</td>
+      <td>2465326</td>
+      <td>2552911</td>
+      <td>2648452</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Manhattan</td>
+      <td>1960101</td>
+      <td>1698281</td>
+      <td>1539233</td>
+      <td>1428285</td>
+      <td>1487536</td>
+      <td>1537195</td>
+      <td>1585873</td>
+      <td>1638281</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Queens</td>
+      <td>1550849</td>
+      <td>1809578</td>
+      <td>1986473</td>
+      <td>1891325</td>
+      <td>1951598</td>
+      <td>2229379</td>
+      <td>2250002</td>
+      <td>2330295</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Staten Island</td>
+      <td>191555</td>
+      <td>221991</td>
+      <td>295443</td>
+      <td>352121</td>
+      <td>378977</td>
+      <td>443728</td>
+      <td>468730</td>
+      <td>487155</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# melt all columns except borough into rows
+df_nycpop_copy = df_nycpop_copy.melt(id_vars=["Borough"], 
+        var_name = "Year", 
+        value_name = "Population")
+df_nycpop_copy.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>Year</th>
+      <th>Population</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>NYC Total</td>
+      <td>1950</td>
+      <td>7891957</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Bronx</td>
+      <td>1950</td>
+      <td>1451277</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Brooklyn</td>
+      <td>1950</td>
+      <td>2738175</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Manhattan</td>
+      <td>1950</td>
+      <td>1960101</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Queens</td>
+      <td>1950</td>
+      <td>1550849</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# change variable type
+df_nycpop_copy = df_nycpop_copy.astype({"Year": int, "Population": int})
+df_nycpop_copy.dtypes
+```
+
+
+
+
+    Borough       object
+    Year           int64
+    Population     int64
+    dtype: object
+
+
+
+
+```python
+# remove all years smaller than 1980
+df_nycpop_copy = df_nycpop_copy[df_nycpop_copy.Year > 1970]
+df_nycpop_copy.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>Year</th>
+      <th>Population</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>18</th>
+      <td>NYC Total</td>
+      <td>1980</td>
+      <td>7071639</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Bronx</td>
+      <td>1980</td>
+      <td>1168972</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Brooklyn</td>
+      <td>1980</td>
+      <td>2230936</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>Manhattan</td>
+      <td>1980</td>
+      <td>1428285</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>Queens</td>
+      <td>1980</td>
+      <td>1891325</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+I want to create a "normalized" population value, where I will take the 1980 values and essentially set those to "zero", or my base line. Then I will take the population as a change in population from 1980, rather than an absolute value. 
+
+
+```python
+# create lists
+loc_list = list(df_nycpop_copy["Borough"].unique())
+pop_1980_list = ["nan"] * len(loc_list)
+# make df of only 1980
+df_pop_1980 = df_nycpop_copy.loc[df_nycpop_copy["Year"] == 1980, ["Borough", "Population"]]
+# loop through boroughs
+for i in range(len(loc_list)):
+    pop_1980_list[i] = df_pop_1980.loc[df_pop_1980["Borough"] == loc_list[i], ["Population"]].iloc[0]["Population"]
+# population vals
+pop_1980_list
+```
+
+
+
+
+    [7071639, 1168972, 2230936, 1428285, 1891325, 352121]
+
+
+
+
+```python
+# new list of 1980 populations length of df
+pop_1980_full = pop_1980_list + pop_1980_list + pop_1980_list + pop_1980_list + pop_1980_list
+# divide populations by 1980s vals
+df_nycpop_copy["Population Change Since 1980"] = df_nycpop_copy["Population"]/pop_1980_full
+df_nycpop_copy.tail()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>Year</th>
+      <th>Population</th>
+      <th>Population Change Since 1980</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>43</th>
+      <td>Bronx</td>
+      <td>2020</td>
+      <td>1446788</td>
+      <td>1.237658</td>
+    </tr>
+    <tr>
+      <th>44</th>
+      <td>Brooklyn</td>
+      <td>2020</td>
+      <td>2648452</td>
+      <td>1.187148</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>Manhattan</td>
+      <td>2020</td>
+      <td>1638281</td>
+      <td>1.147027</td>
+    </tr>
+    <tr>
+      <th>46</th>
+      <td>Queens</td>
+      <td>2020</td>
+      <td>2330295</td>
+      <td>1.232097</td>
+    </tr>
+    <tr>
+      <th>47</th>
+      <td>Staten Island</td>
+      <td>2020</td>
+      <td>487155</td>
+      <td>1.383487</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Great, we've got our absolute population for NYC and her boroughs from 1980-2020 as well as the change in population from 1980 levels. I'm also going to want the percentages as well to combine to this.
+
+
+```python
+# add column names to list
+list_rawdat.append('2030')
+list_rawdat.append('2040')
+list_rawdat.append('2030 - Boro share of NYC total')
+list_rawdat.append('2040 - Boro share of NYC total')
+list_rawdat.append('1950 - Boro share of NYC total')
+list_rawdat.append('1960 - Boro share of NYC total')
+list_rawdat.append('1970 - Boro share of NYC total')
+list_rawdat.append('Age Group')
+list_rawdat
+```
+
+
+
+
+    ['1950',
+     '1960',
+     '1970',
+     '1980',
+     '1990',
+     '2000',
+     '2010',
+     '2020',
+     '2030',
+     '2040',
+     '2030 - Boro share of NYC total',
+     '2040 - Boro share of NYC total',
+     '1950 - Boro share of NYC total',
+     '1960 - Boro share of NYC total',
+     '1970 - Boro share of NYC total',
+     'Age Group']
+
+
+
+
+```python
+# make another copy of the original data
+df_nycpop_copy2 = df_nycpop.copy(deep=True)
+# remove unncesessary columns
+for i in list_rawdat:
+    del df_nycpop_copy2[i]
+df_nycpop_copy2
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>1980 - Boro share of NYC total</th>
+      <th>1990 - Boro share of NYC total</th>
+      <th>2000 - Boro share of NYC total</th>
+      <th>2010 - Boro share of NYC total</th>
+      <th>2020 - Boro share of NYC total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>NYC Total</td>
+      <td>100.00</td>
+      <td>100.00</td>
+      <td>100.00</td>
+      <td>100.00</td>
+      <td>100.00</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Bronx</td>
+      <td>16.53</td>
+      <td>16.44</td>
+      <td>16.64</td>
+      <td>16.80</td>
+      <td>16.92</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Brooklyn</td>
+      <td>31.55</td>
+      <td>31.42</td>
+      <td>30.78</td>
+      <td>30.97</td>
+      <td>30.97</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Manhattan</td>
+      <td>20.20</td>
+      <td>20.31</td>
+      <td>19.20</td>
+      <td>19.24</td>
+      <td>19.16</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Queens</td>
+      <td>26.75</td>
+      <td>26.65</td>
+      <td>27.84</td>
+      <td>27.30</td>
+      <td>27.25</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Staten Island</td>
+      <td>4.98</td>
+      <td>5.18</td>
+      <td>5.54</td>
+      <td>5.69</td>
+      <td>5.70</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# rename columns
+df_nycpop_copy2 = df_nycpop_copy2.rename(columns = {
+    '1980 - Boro share of NYC total': '1980', 
+    '1990 - Boro share of NYC total': '1990',
+    '2000 - Boro share of NYC total': '2000',
+    '2010 - Boro share of NYC total': '2010',
+    '2020 - Boro share of NYC total': '2020'
+})
+# melt columns into row
+df_nycpop_copy2 = df_nycpop_copy2.melt(id_vars=["Borough"], 
+        var_name = "Year", 
+        value_name = "Boro share of NYC total")
+df_nycpop_copy2.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>Year</th>
+      <th>Boro share of NYC total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>NYC Total</td>
+      <td>1980</td>
+      <td>100.00</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Bronx</td>
+      <td>1980</td>
+      <td>16.53</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Brooklyn</td>
+      <td>1980</td>
+      <td>31.55</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Manhattan</td>
+      <td>1980</td>
+      <td>20.20</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Queens</td>
+      <td>1980</td>
+      <td>26.75</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Great, now we have all the population data we'll need (for now). Any additional changes (such as taking the log of values) will be performed later.
+
+# Exploratory Data Analysis
+<a id = "eda"></a>
+
+## Info and Summary
+<a id = "basics"></a>
+
+Let's take a look at the data! We'll be looking at a summary of the data as well as some pairplots and correlation matrices, just to get a feel for what we're working with.
+
+
+```python
+df_allegations.info()
+```
+
+    <class 'pandas.core.frame.DataFrame'>
+    Int64Index: 33334 entries, 0 to 33357
+    Data columns (total 31 columns):
+     #   Column                    Non-Null Count  Dtype  
+    ---  ------                    --------------  -----  
+     0   unique_mos_id             33334 non-null  int64  
+     1   first_name                33334 non-null  object 
+     2   last_name                 33334 non-null  object 
+     3   full_name                 33334 non-null  object 
+     4   command_now               33334 non-null  object 
+     5   shield_no                 33334 non-null  int64  
+     6   complaint_id              33334 non-null  int64  
+     7   month_received            33334 non-null  int64  
+     8   year_received             33334 non-null  int64  
+     9   date_received             33334 non-null  object 
+     10  month_closed              33334 non-null  int64  
+     11  year_closed               33334 non-null  int64  
+     12  date_closed               33334 non-null  object 
+     13  command_at_incident       31802 non-null  object 
+     14  rank_abbrev_incident      33334 non-null  object 
+     15  rank_abbrev_now           33334 non-null  object 
+     16  rank_now                  33334 non-null  object 
+     17  rank_incident             33334 non-null  object 
+     18  mos_ethnicity             33334 non-null  object 
+     19  mos_gender                33334 non-null  object 
+     20  mos_age_incident          33334 non-null  int64  
+     21  complainant_ethnicity     28889 non-null  object 
+     22  complainant_gender        29158 non-null  object 
+     23  complainant_age_incident  28541 non-null  float64
+     24  fado_type                 33334 non-null  object 
+     25  allegation                33333 non-null  object 
+     26  precinct                  33310 non-null  float64
+     27  contact_reason            33138 non-null  object 
+     28  outcome_description       33278 non-null  object 
+     29  board_disposition         33334 non-null  object 
+     30  borough                   33310 non-null  object 
+    dtypes: float64(2), int64(8), object(21)
+    memory usage: 8.1+ MB
+
+
+## Pair Plot
+<a id = "pair_plot"></a>
+
+Let's see if anything interesting can be observed in a pairplot of the allegation data.
+
+
+```python
+import seaborn as sns
+sns.set(color_codes=True)
+from  matplotlib import pyplot as plt
+%matplotlib inline 
+#ignore warnings
+import warnings
+warnings.filterwarnings('ignore')
+```
+
+
+```python
+plot_pair = sns.pairplot(
+    data = df_allegations, 
+    hue = "rank_abbrev_incident"
+)
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_60_0.png)
+    
+
+
+This pairsplot is not *great* to look at. We see that most of these compalaints are made about `Police Officers` (as opposed to `Sergeant` or `Lieutenant`). 
+
+## Correlation Matrix
+<a id = "corr"></a>
+
+Let's see if anything interesting can be observed in a correlation matrix of the allegation data.
+
+
+```python
+corr = df_allegations.corr(method='pearson')
+corr = round(corr, 2)
+
+# set the context as a talk with larger font 
+sns.set_context("talk", font_scale = 1) 
+
+# manually set the figure size
+fig, ax = plt.subplots(figsize=(10, 10))
+
+hm1 = sns.heatmap(
+    data = corr,
+    center = 0, 
+    cmap = sns.color_palette("magma", as_cmap=True),
+    square = True, 
+    annot = True, 
+    linewidths=.5,
+    ax = ax
+)
+
+hm1.set_xticklabels(
+    hm1.get_xticklabels(),
+    rotation = 45, 
+    horizontalalignment = 'right'
+);
+
+hm1.set_title("Correlation matrix");
+```
+
+
+    
+![png](output_files/output_63_0.png)
+    
+
+
+It doesn't look like there are any surprising correlations in this data. We have that the `year_received` and `year_closed` are highly correlated, and that the `complaint_id` is highly correlated with the `year_closed`, leading me to believe that the `complaint_id` must be a number that involves the year the complaint is closed. However, for the most part, the correlations amongst the features are fairly weak.
+
+## Racial and ethnic diversity of NYC boroughs
+<a id = "race_bor"></a>
+
+### Absolute population values
+<a id = "abs_pop"></a>
+
+Since we have the data let's change the racial and ethnic diversity of the five NYC boroughs. First we will look at the raw population values.
+
+
+```python
+import matplotlib.ticker as ticker
+
+def make_barplot_census(df_in, xVal, yVal, position, yscale, yscaleChara, titleVal, ylabelVal, xlabelVal):
+    """
+    function to create the barplots for the census data
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    xVal: the column for the x axis
+    yVal: the column for the y axis
+    position: position of the figure (ax)
+    yscale: scale of the y axis (e.g. 1e6)
+    yscaleChara: letter to represent y axis scale (e.g. M)
+    rotationVal: rotation (in degrees) of the x axis labels
+    titleVal: the main title string 
+    ylabelVal: the y axis title string 
+    xlabelVal: the x axis title string
+    
+    Returns
+    ----------
+    plot: the formatted barplot with data
+    """
+    plot = sns.barplot(
+        data = df_in, 
+        x = xVal,
+        y = yVal,
+        hue = xVal,
+        palette = "colorblind", 
+        ax = position
+    )
+    
+    # set plot labels
+    plot.set(
+        title = titleVal,
+        ylabel = ylabelVal, 
+        xlabel = xlabelVal,
+        xticklabels = []
+    )
+    
+    # set yaxis scale
+    position.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:,.2f}'.format(x/yscale) + yscaleChara))
+    
+    # remove legend
+    #plot.legend_.remove()
+    
+    return plot
+```
+
+
+```python
+fig, ((ax00, ax01, ax02, ax03), (ax10, ax11, ax12, ax14)) = plt.subplots(2, 4, sharey = False, figsize=(35, 20))
+
+# total population
+plot_totpop_count = make_barplot_census(df_counties, "BOROUGH", "TOT_POP", 
+                                        ax00, 1e6, "M", 
+                                        "Absolute Total \n2019 Population Estimates", 
+                                        "Population (Millions)", "Borough"
+                                       )
+# total white population
+plot_totwac_count = make_barplot_census(df_counties, "BOROUGH", "WAC_TOT", 
+                                        ax01, 1e6, "M", 
+                                        "Absolute Total White \n2019 Population Estimates", 
+                                        "Population (Millions)", "Borough"
+                                       )
+# total black population
+plot_totbac_count = make_barplot_census(df_counties, "BOROUGH", "BAC_TOT", 
+                                        ax02, 1e6, "M", 
+                                        "Absolute Total Black \n2019 Population Estimates", 
+                                        "Population (Millions)", "Borough"
+                                       )
+# total native american population
+plot_totnac_count = make_barplot_census(df_counties, "BOROUGH", "IAC_TOT", 
+                                        ax03, 1e3, "K", 
+                                        "Absolute Total Native American \n2019 Population Estimates", 
+                                        "Population (Thousands)", "Borough"
+                                       )
+# total asian population
+plot_totaac_count = make_barplot_census(df_counties, "BOROUGH", "AAC_TOT", 
+                                        ax10, 1e3, "K", 
+                                        "Absolute Total Asian\n2019 Population Estimates", 
+                                        "Population (Thousands)", "Borough"
+                                       )
+# total native hawaiian population
+plot_totnac_count = make_barplot_census(df_counties, "BOROUGH", "NAC_TOT", 
+                                        ax11, 1e3, "K", 
+                                        "Absolute Total Native Hawaiian \n2019 Population Estimates", 
+                                        "Population (Thousands)", "Borough"
+                                       )
+# total tom population
+plot_tottom_count = make_barplot_census(df_counties, "BOROUGH", "TOM_TOT", 
+                                        ax12, 1e3, "K", 
+                                        "Absolute Total Two or more Races \n2019 Population Estimates", 
+                                        "Population (Thousands)", "Borough"
+                                       )
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_67_0.png)
+    
+
+
+We can see that Brooklyn (\~2.5 million) and Queens (\~2.3 million) have the highest populations and that Staten Island (\~0.5 million) has the lowest. Brooklyn has the most white and black people of all the boroughs, whereas Queens has the most Asiand and Native Hawaiian individuals. Brooklyn and Queens appear to be pretty much tied for the number of people that are two or more races, whereas the Bronx has the most Native American individuals. 
+
+### Relative population values
+<a id = "rel_pop"></a>
+
+Let's look at the relative population of the boroughs for racial and ethnic diversity. This will require me to make a few new columns in the data.
+
+
+```python
+tot_list = ["nan"] * len(df_counties.columns)
+substring3 = "_TOT"
+for i in df_counties.columns:
+    if substring3 in i:
+        tot_list.append(i)
+tot_list = [x for x in tot_list if str(x) != 'nan']
+tot_list
+```
+
+
+
+
+    ['TOM_TOT', 'WAC_TOT', 'BAC_TOT', 'IAC_TOT', 'AAC_TOT', 'NAC_TOT']
+
+
+
+
+```python
+for i in tot_list:
+    temp_series = (df_counties[i]/df_counties["TOT_POP"])*100
+    temp_colName = i.replace("_TOT", "_REL")
+    df_counties[temp_colName] = temp_series
+```
+
+
+```python
+df_counties
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>COUNTY</th>
+      <th>STNAME</th>
+      <th>CTYNAME</th>
+      <th>BOROUGH</th>
+      <th>YEAR</th>
+      <th>TOT_POP</th>
+      <th>TOT_MALE</th>
+      <th>TOT_FEMALE</th>
+      <th>TOM_MALE</th>
+      <th>TOM_FEMALE</th>
+      <th>...</th>
+      <th>AAC_TOT</th>
+      <th>NAC_MALE</th>
+      <th>NAC_FEMALE</th>
+      <th>NAC_TOT</th>
+      <th>TOM_REL</th>
+      <th>WAC_REL</th>
+      <th>BAC_REL</th>
+      <th>IAC_REL</th>
+      <th>AAC_REL</th>
+      <th>NAC_REL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>5</td>
+      <td>New York</td>
+      <td>Bronx County</td>
+      <td>Bronx</td>
+      <td>2019</td>
+      <td>1418207</td>
+      <td>669548</td>
+      <td>748659</td>
+      <td>24883</td>
+      <td>28508</td>
+      <td>...</td>
+      <td>71398</td>
+      <td>4297</td>
+      <td>4847</td>
+      <td>9144</td>
+      <td>3.76468</td>
+      <td>47.646</td>
+      <td>46.7896</td>
+      <td>4.1807</td>
+      <td>5.03438</td>
+      <td>0.644758</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>47</td>
+      <td>New York</td>
+      <td>Kings County</td>
+      <td>Brooklyn</td>
+      <td>2019</td>
+      <td>2559903</td>
+      <td>1212194</td>
+      <td>1347709</td>
+      <td>33203</td>
+      <td>36965</td>
+      <td>...</td>
+      <td>352498</td>
+      <td>3724</td>
+      <td>4003</td>
+      <td>7727</td>
+      <td>2.74104</td>
+      <td>51.8677</td>
+      <td>35.4844</td>
+      <td>1.58233</td>
+      <td>13.77</td>
+      <td>0.301847</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>81</td>
+      <td>New York</td>
+      <td>Queens County</td>
+      <td>Queens</td>
+      <td>2019</td>
+      <td>2253858</td>
+      <td>1093889</td>
+      <td>1159969</td>
+      <td>33428</td>
+      <td>34939</td>
+      <td>...</td>
+      <td>641880</td>
+      <td>5032</td>
+      <td>5447</td>
+      <td>10479</td>
+      <td>3.03333</td>
+      <td>49.7983</td>
+      <td>22.512</td>
+      <td>2.072</td>
+      <td>28.4792</td>
+      <td>0.464936</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>61</td>
+      <td>New York</td>
+      <td>New York County</td>
+      <td>Manhattan</td>
+      <td>2019</td>
+      <td>1628706</td>
+      <td>771478</td>
+      <td>857228</td>
+      <td>25779</td>
+      <td>30180</td>
+      <td>...</td>
+      <td>230452</td>
+      <td>2509</td>
+      <td>2874</td>
+      <td>5383</td>
+      <td>3.4358</td>
+      <td>67.5431</td>
+      <td>19.8447</td>
+      <td>1.97801</td>
+      <td>14.1494</td>
+      <td>0.330508</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>85</td>
+      <td>New York</td>
+      <td>Richmond County</td>
+      <td>Staten Island</td>
+      <td>2019</td>
+      <td>476143</td>
+      <td>231330</td>
+      <td>244813</td>
+      <td>5170</td>
+      <td>5259</td>
+      <td>...</td>
+      <td>56177</td>
+      <td>497</td>
+      <td>476</td>
+      <td>973</td>
+      <td>2.19031</td>
+      <td>76.3046</td>
+      <td>12.9457</td>
+      <td>1.182</td>
+      <td>11.7983</td>
+      <td>0.20435</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 32 columns</p>
+</div>
+
+
+
+With our relative populations we can plot these results.
+
+
+```python
+fig, ((ax00, ax01, ax02), (ax10, ax11, ax12)) = plt.subplots(2, 3, sharey = False, figsize=(35, 20))
+
+# total white population
+plot_rel_wac = make_barplot_census(df_counties, "BOROUGH", "WAC_REL", 
+                                        ax00, 1, "%", 
+                                        "Relative Total White \n2019 Population Estimates", 
+                                        "Population (%)", "Borough"
+                                       )
+# total black population
+plot_rel_bac = make_barplot_census(df_counties, "BOROUGH", "BAC_REL", 
+                                        ax01, 1, "%", 
+                                        "Relative Total Black \n2019 Population Estimates", 
+                                        "Population (%)", "Borough"
+                                       )
+# total native american population
+plot_rel_iac = make_barplot_census(df_counties, "BOROUGH", "IAC_REL", 
+                                        ax02, 1, "%", 
+                                        "Relative Total Native American \n2019 Population Estimates", 
+                                        "Population (%)", "Borough"
+                                       )
+# total asian population
+plot_rel_aac = make_barplot_census(df_counties, "BOROUGH", "AAC_REL", 
+                                        ax10, 1, "%", 
+                                        "Relative Total Asian\n2019 Population Estimates", 
+                                        "Population (%)", "Borough"
+                                       )
+# total native hawaiian population
+plot_rel_nac = make_barplot_census(df_counties, "BOROUGH", "NAC_REL", 
+                                        ax11, 1, "%", 
+                                        "Relative Total Native Hawaiian \n2019 Population Estimates", 
+                                        "Population (%)", "Borough"
+                                       )
+# total tom population
+plot_rel_tom = make_barplot_census(df_counties, "BOROUGH", "TOM_REL", 
+                                        ax12, 1, "%", 
+                                        "Relative Total Two or more Races \n2019 Population Estimates", 
+                                        "Population (%)", "Borough"
+                                       )
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_74_0.png)
+    
+
+
+This paints a different picture than the raw/absolute population values. We can see that even though Staten Island has the smallest absolute population, it has the highest proportion of white people, as opposed to how Brooklyn had the highest absolute population of whites. Queens still has (propostionally) the most Asian individuals, but now we see that the Bronx leads in black, Native Hawaiian, and Two or more Races categories. We see that proportionally Manhattan is \~70% white, and does not lead in any other category of race. We see that the Bronx is fairly diverse, it has the smallest proportional white population but does very well in every other category (except for Asians). We also see that Brooklyn is fairly diverse as well. with large proportional black and mixed race groups. 
+
+It will be interesting to see which boroughs have the most amount of complaints. We expect that the more racially diverse boroughs have large numbers of police complaints, whereas the whiter boroughs might have fewer complaints against the NYPD.
+
+## Population of NYC over time
+<a id = "pop_change"></a>
+
+Let's look at how the population in NYC has changed over time. This will be usefull when looking at the change in the number of complaints.
+
+
+```python
+def make_linplot(df_in, xVal, yVal, hueVal, axPosition, yScale, yScaleChar, titleLab, xLab, yLab):
+    """
+    function to create a custom lineplot
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    xVal: column for x axis
+    yVal: column for y axis
+    hueVal: column for hue
+    axPosition: position of plot in the subplot grid
+    yScale: scale of y axis
+    yScaleChar: character to represent scale of y axis
+    titleLab: the main title string
+    xLab: the x axis title string
+    yLab: the y axis title string
+    
+    Returns
+    ----------
+    plot: the custom line plot
+    """
+    
+    plot = sns.lineplot(
+        data = df_in, 
+        x = xVal, 
+        y = yVal,
+        palette = "colorblind",
+        hue = hueVal,
+        ax = axPosition
+    )
+
+    plot.set(
+        title = titleLab,
+        xlabel = xLab, 
+        ylabel = yLab
+    )
+
+    axPosition.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:,.2f}'.format(x/yScale) + yScaleChar))
+```
+
+
+```python
+# take the log of the population 
+df_nycpop_copy["Log of Population"] = np.log(df_nycpop_copy["Population"])
+df_nycpop_copy.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>Year</th>
+      <th>Population</th>
+      <th>Population Change Since 1980</th>
+      <th>Log of Population</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>18</th>
+      <td>NYC Total</td>
+      <td>1980</td>
+      <td>7071639</td>
+      <td>1.0</td>
+      <td>15.771603</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Bronx</td>
+      <td>1980</td>
+      <td>1168972</td>
+      <td>1.0</td>
+      <td>13.971635</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Brooklyn</td>
+      <td>1980</td>
+      <td>2230936</td>
+      <td>1.0</td>
+      <td>14.617932</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>Manhattan</td>
+      <td>1980</td>
+      <td>1428285</td>
+      <td>1.0</td>
+      <td>14.171985</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>Queens</td>
+      <td>1980</td>
+      <td>1891325</td>
+      <td>1.0</td>
+      <td>14.452788</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# remove NYC tot from percentages
+df_nycpop_copy2 = df_nycpop_copy2[df_nycpop_copy2.Borough != "NYC Total"]
+df_nycpop_copy2.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Borough</th>
+      <th>Year</th>
+      <th>Boro share of NYC total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>Bronx</td>
+      <td>1980</td>
+      <td>16.53</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Brooklyn</td>
+      <td>1980</td>
+      <td>31.55</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Manhattan</td>
+      <td>1980</td>
+      <td>20.20</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Queens</td>
+      <td>1980</td>
+      <td>26.75</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Staten Island</td>
+      <td>1980</td>
+      <td>4.98</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+fig, ((ax00, ax01), (ax10, ax11)) = plt.subplots(2, 2, sharey = False, figsize = (20, 20))
+
+plot_nycpop = make_linplot(df_nycpop_copy, "Year", "Population", "Borough", ax00, 1e6, "M", 
+                           "Population of NYC from 1980-2020", "Year", "Population (Millions)")
+
+plot_nycpop_log = make_linplot(df_nycpop_copy, "Year", "Log of Population", "Borough", ax01, 1, "", 
+                           "Log of the NYC Population from 1980-2020", "Year", "Log(Population)")
+
+plot_nycpop_rel = make_linplot(df_nycpop_copy, "Year", "Population Change Since 1980", "Borough", ax10, 1, "x", 
+                           "Change in NYC Population from 1980-2020 \n Using 1980 population as base value", 
+                               "Year", "Population (Change)")
+
+plot_nycpop_share = make_linplot(df_nycpop_copy2, "Year", "Boro share of NYC total", "Borough", ax11, 1, "%", 
+                           "Borough share of NYC total Population from 1980-2020", 
+                               "Year", "Population (% of NYC Total)")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_80_0.png)
+    
+
+
+In terms of population growth each borough increases at a slower rate than the total of NYC, which makes sense. The log of the population was included to tease out the behavior of the boroughs bunched together with populations of \~1 million. It seems that most of the boroughs have pretty much been around the same percentage of NYC's total population, in that Brooklyn is consistently over 30% of NYC total, Queens is around 27%, Statent Island stays around 5% and so on. The biggest observable change is if we compare the population change from 1980 to 2020. If we take the 1980 population as the "base" value and normalize the other years by this value, we can find a change from the 1980 Population. We see that in 2020 the Bronx is at almost 1.4x that of what it was in 1980. The Bronx has had the most dramatic change in population from 1980, Queens experienced a small spike in 2000, and Manhattan has been noticeably linear in its growth. 
+
+We will see how the number of complaints from the boroughs compare to the population increases. Naturally one would imagine that the number of complaints would increase as the population increases, However, we are looking to see if any of the boroughs have a number of complaints that is wildly different than their population growth.
+
+# Complaints per Officer and per Precinct
+<a id = "complaints"></a>
+
+## Absolute number and relative proportion of complaints
+<a id = "abs_comp"></a>
+
+Let's look at some of the values like `unique_mos_id` and `precinct` and see just the counts of them first. It would be interesting to see, for example, if one particular officer or precinct has a particularly high number of filed complaints as compared to the others. 
+
+
+```python
+import matplotlib.patches as mpatches
+
+def create_legend(locNum):
+    """
+    function to create custom legend for the 5 boroughs
+
+    Parameters
+    ----------
+    locNum: location of the legend
+    
+    Returns
+    ----------
+    
+    """
+    # colors in legend and labels
+    patch_bro = mpatches.Patch(color = "#3B91C2", label = "Brooklyn")
+    patch_si = mpatches.Patch(color = "#E1A640", label = "Staten Island")
+    patch_m = mpatches.Patch(color = "#3CB193", label = "Manhattan")
+    patch_q = mpatches.Patch(color = "#DA813C", label = "Queens")
+    patch_brx = mpatches.Patch(color = "#D394C9", label = "Bronx")
+    
+    # list of patches
+    handles_list = [patch_bro, patch_si, patch_m, patch_q, patch_brx]
+
+    # place this new legend outside of both plots
+    plt.legend(
+        handles = handles_list, 
+        title = "Borough", 
+        bbox_to_anchor = (1.05, 1), 
+        loc = locNum, 
+        borderaxespad = 0.
+    )
+```
+
+
+```python
+def make_histplot(df_in, xVal, statVal, hueVal, binNum, axPosition, titleVal, xLabVal):
+    """
+    function to create histograms
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    xVal: column to use for x axis
+    statVal: aggregate statistic to compute in each bin (e.g. count or porbability)
+    binNum: number of bins
+    axPosition: position of plot in grid of subplots
+    titleVal: the main title string
+    xLabVal: the x axis title string
+    
+    Returns
+    ----------
+    plot: the customized histogram
+    """
+    plot = sns.histplot(
+        data = df_in, 
+        x = xVal,
+        stat = statVal,
+        hue = hueVal,
+        multiple = "stack",
+        palette = "colorblind",
+        bins = binNum,
+        ax = axPosition
+    )
+    
+    # remove legend 
+    plot.legend_.remove()
+    
+    # set plot labels
+    plot.set(
+        title = titleVal, 
+        xlabel = xLabVal
+    )
+    
+    return plot
+```
+
+
+```python
+# plot side by side
+fig, ((ax00, ax01), (ax10, ax11)) = plt.subplots(2, 2, sharey = False, figsize=(15, 25))
+
+sns.set()
+sns.set_context("talk", font_scale = 1) 
+
+# counts for officers
+plot_uniqueMosID = make_histplot(df_allegations, "unique_mos_id", "count", "borough", 50, ax00, 
+                                 "Number of complaints received \nby individual officers for all years", 
+                                 "Unique ID of Officer")
+# probability for officiers
+plot_uniqueMosID_prob = make_histplot(df_allegations, "unique_mos_id", "probability", "borough", 50, ax01, 
+                                 "Percentage of complaints received \nby individual officers for all years", 
+                                 "Unique ID of Officer")
+# counts for precincts
+plot_precinct = make_histplot(df_allegations, "precinct", "count", "borough", 77, ax10, 
+                                 "Number of complaints received \nat a specific precinct for all years", 
+                                 "Precinct # associated with the complaint")
+# probability for precincts
+plot_precinct_prob = make_histplot(df_allegations, "precinct", "probability", "borough", 77, ax11, 
+                                 "Percentage of complaints received \nat a specific precinct for all years", 
+                                 "Precinct # associated with the complaint")
+# create manual legend
+create_legend(2)
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_85_0.png)
+    
+
+
+From looking at the above histograms I can see that the officers with the most complaints have an ID of roughly 20000-25000. It appears that these offices get a lot of complaints in the Bronx and Brooklyn. For the precincts we see that 40-50 (which are in the Bronx) and ~65-80 (which are in Brooklyn) have the most complaints. This seems to be the same issue as for where the cops get the complaints. It also appears that several cops receive much more complaints than other officers. 
+
+Interestingly enough Queens has relatively few complaints despite its large non-white Asian population, where as Staten Island has more complaints despite its high proportion of whites. Manhattan has the least complaints, and is also majority white and incredibly wealthy. 
+
+## Complaints broken down by race
+<a id = "comp_race"></a>
+
+In the above we looked at how the complaints broke down by borough, but the data does include the various features of both the officer and the complainant (age, gender, race). 
+
+### Race of complainants
+<a id = "race_complainants"></a>
+
+Let's look to see who is filing the most complaints against the NYPD, and thus the individuals with the most exposure to and incidents with the NYPD.
+
+
+```python
+def make_histplotLegend(df_in, xVal, statVal, hueVal, binNum, axPosition, titleVal, xLabVal):
+    """
+    function to create histograms
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    xVal: column to use for x axis
+    statVal: aggregate statistic to compute in each bin (e.g. count or porbability)
+    binNum: number of bins
+    axPosition: position of plot in grid of subplots
+    titleVal: the main title string
+    xLabVal: the x axis title string
+    
+    Returns
+    ----------
+    plot: the customized histogram
+    """
+    plot = sns.histplot(
+        data = df_in, 
+        x = xVal,
+        stat = statVal,
+        hue = hueVal,
+        multiple = "stack",
+        palette = "colorblind",
+        bins = binNum,
+        ax = axPosition
+    )
+    
+    # set plot labels
+    plot.set(
+        title = titleVal, 
+        xlabel = xLabVal
+    )
+    
+    return plot
+```
+
+
+```python
+# plot side by side
+fig, (ax0,ax1) = plt.subplots(1, 2, sharey = False, figsize=(15, 10))
+
+sns.set()
+sns.set_context("talk", font_scale = 1) 
+
+# probability for officiers
+hist_race_id_complain = make_histplotLegend(df_allegations, "unique_mos_id", "probability", "complainant_ethnicity", 50, ax0, 
+                                 "Percentage of complaints received \nby individual officers for all years", 
+                                 "Unique ID of Officer")
+# probability for precincts
+hist_race_pre_complain = make_histplotLegend(df_allegations, "precinct", "probability", "complainant_ethnicity", 77, ax1, 
+                                 "Percentage of complaints received \nat a specific precinct for all years", 
+                                 "Precinct # associated with the complaint")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_89_0.png)
+    
+
+
+Indeed, the people filing the most complaints against the NYPD are black individuals, followed by Hispanic individuals. Even in boroughs that are majority white by large margins (Manhattan and Staten Island) we see that black individuals file the most incident complaints in every borough. Asian individuals file some of the smallest numbers of complaints, which might explain why Queens, with such a large population and such a large Asian community, files much less complaints than you might expect for its population (see section below for details).
+
+### Race of officers
+<a id = "race_officers"></a>
+
+Let's look to see who the officers that receive the complaints are.
+
+
+```python
+# plot side by side
+fig, (ax0,ax1) = plt.subplots(1, 2, sharey = False, figsize=(15, 10))
+
+sns.set()
+sns.set_context("talk", font_scale = 1) 
+
+# probability for officiers
+hist_race_id_mos = make_histplotLegend(df_allegations, "unique_mos_id", "probability", "mos_ethnicity", 50, ax0, 
+                                 "Percentage of complaints received \nby individual officers for all years", 
+                                 "Unique ID of Officer")
+# probability for precincts
+hist_race_pre_mos = make_histplotLegend(df_allegations, "precinct", "probability", "mos_ethnicity", 77, ax1, 
+                                 "Percentage of complaints received \nat a specific precinct for all years", 
+                                 "Precinct # associated with the complaint")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_92_0.png)
+    
+
+
+By and large police officers and precincts that receive complaints are white, with the next largest group being hispanic. Black individuals account for very few police officers.
+
+# Complaints over the years
+<a id = "comp_years"></a>
+
+## Absolute number and relative proportion of complaints
+<a id = "abs_comp_yr"></a>
+
+Let's look at how the number of complaints each year has changed. But first, in order to do so, I'll need to create new data from which to plot.
+
+
+```python
+def make_df_count_uniques(df_in, featureName, colTitle, countTitle):
+    """
+    function to make a dataframe that contains the count of unique values in a column from an input dataframe
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    featureName: column in which you wish to count unique values
+    colTitle: title of the new column
+    countTitle: title of count column
+    
+    Returns
+    ----------
+    df_out: dataframe with counts of unique values
+    """
+    # get the count of unique values in a column using value_counts()
+    series = df_in[featureName].value_counts()
+    # create a dict and pass this as the data param to the dataframe constructor
+    df_out = pd.DataFrame({colTitle: series.index, countTitle: series.values})
+    # convert all elements to int
+    df_out.astype("int")
+    # sort by the new column of unique values
+    df_out = df_out.sort_values(by=[colTitle])
+    # reset index
+    df_out = df_out.reset_index(drop=True)
+    return df_out
+```
+
+
+```python
+# create dataframes of counts using above function
+df_yr_rec = make_df_count_uniques(df_allegations, "year_received", "year_rec", "received")
+df_yr_clo = make_df_count_uniques(df_allegations, "year_closed", "year_clo", "closed")
+# combine two dataframes
+df_yr_counts = pd.concat([df_yr_rec, df_yr_clo], axis=1, sort=False)
+# delete year_clo
+del df_yr_counts["year_clo"]
+# rename year_rec
+df_yr_counts = df_yr_counts.rename(columns={"year_rec": "year"})
+# set index to year
+df_yr_counts = df_yr_counts.set_index("year")
+# tail
+df_yr_counts.tail()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>received</th>
+      <th>closed</th>
+    </tr>
+    <tr>
+      <th>year</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2016</th>
+      <td>2345</td>
+      <td>2408</td>
+    </tr>
+    <tr>
+      <th>2017</th>
+      <td>2178</td>
+      <td>1945</td>
+    </tr>
+    <tr>
+      <th>2018</th>
+      <td>2278</td>
+      <td>1635</td>
+    </tr>
+    <tr>
+      <th>2019</th>
+      <td>1642</td>
+      <td>2323</td>
+    </tr>
+    <tr>
+      <th>2020</th>
+      <td>4</td>
+      <td>1256</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# Make a copy of df_yr_counts
+# deep = True means that modifications to the data or indices of the copy will not be reflected in the original object 
+df_yr_cnt_rel = df_yr_counts.copy(deep=True)
+# delete counts columns
+del df_yr_cnt_rel["received"]
+del df_yr_cnt_rel["closed"]
+# total number of complaints
+tot_num_counts = len(df_allegations)
+# create new columns
+df_yr_cnt_rel["received"] = (df_yr_counts["received"]/tot_num_counts)*100
+df_yr_cnt_rel["closed"] = (df_yr_counts["closed"]/tot_num_counts)*100
+# tail
+df_yr_cnt_rel.tail()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>received</th>
+      <th>closed</th>
+    </tr>
+    <tr>
+      <th>year</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2016</th>
+      <td>7.034859</td>
+      <td>7.223856</td>
+    </tr>
+    <tr>
+      <th>2017</th>
+      <td>6.533869</td>
+      <td>5.834883</td>
+    </tr>
+    <tr>
+      <th>2018</th>
+      <td>6.833863</td>
+      <td>4.904902</td>
+    </tr>
+    <tr>
+      <th>2019</th>
+      <td>4.925901</td>
+      <td>6.968861</td>
+    </tr>
+    <tr>
+      <th>2020</th>
+      <td>0.012000</td>
+      <td>3.767925</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+fig, (ax0, ax1) = plt.subplots(1, 2, sharey = False, figsize=(15, 5)) 
+
+plot_yrs_cnt_abs = sns.lineplot(data = df_yr_counts, ax = ax0)
+
+plot_yrs_cnt_abs.set(
+    title = "Absolute number of complaints over time", 
+    ylabel = "Count",
+    xlabel = "Year"
+)
+
+plot_yrs_cnt_rel = sns.lineplot(data = df_yr_cnt_rel, ax = ax1)
+
+plot_yrs_cnt_rel.set(
+    title = "Relative proportion of complaints over time", 
+    ylabel = "Percent (%)",
+    xlabel = "Year"
+)
+
+# set yaxis scale
+ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:,.0f}'.format(x) + "%"))
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_98_0.png)
+    
+
+
+We see that as we move away from 1985 the number of complaints against the NYPD increases. The most requests received occured in 2016, and the most request closed occured in 2015. The BLM protests started back in 2013, which you might have expected to lead to an increase in complaints against the NYPD, and that does indeed appear to be the case. It seems the complaints escalated to a peak right before and during the election year. There is another peak in complaints in 2019, the start of a new wave of ongoing BLM protests, and 2020 rates of requests being received and closed might be so low due to the COVID-19 pandemic and quarantine restrictions.  
+
+What I do find interesting is that for the most part the number of closed complaints followed the trend of received complaints up until about \~2009, and then the number of closed complaints takes a deep dip in \~2011 only to shoot back up in \~2015. For the most part from 1985 until the mid 2000s there was a steady growth in complaints which might simply be increasing due to increases in population in NYC. Luckily, we have the NYC census data starting 
+
+## Absolute and relative number of Complaints per borough
+<a id = "comp_boro_person"></a>
+
+### Absolute number of complaints
+<a id = "comp_boro_person_abs"></a>
+
+Now let's see what the complaindf_allegationst numbers per borough and the complaints per borough per person look. I expect the Bronx and Brooklyn to have high numbers of complaints as we saw above, but maybe their large populations will mean each borough has roughly the same number of complaints per population.
+
+
+```python
+def makeDF_compYear(df_in, colNameYear, colNameComplaints):
+    """
+    function to make a dataframe that contains the count of coomplaints per year for a specific borough
+
+    Parameters
+    ----------
+    df_in: input dataframe
+    colNameYear: column name for the year (either received or closed)
+    colNameComplaints: column name for the complaints (either received or closed)
+    
+    Returns
+    ----------
+    df_out: output dataframe
+    """
+    # make lists of years and boroughs
+    yearTot_list = list(df_in[colNameYear].unique())
+    boroTot_list = list(df_in["borough"].unique())
+    # remove NANs from list
+    yearTot_list = [x for x in yearTot_list if str(x) != "nan"]
+    boroTot_list = [x for x in boroTot_list if str(x) != "nan"]
+    # empty double nested list
+    lst = [[] for _ in range(len(yearTot_list))]
+    
+    # 2 nested 4 loops
+    # loop through the years
+    for y in range(len(yearTot_list)):
+        # loop through the boroughs
+        for b in range(len(boroTot_list)):
+            # Get a bool series representing which row satisfies the condition 
+            temp_df = df_in.apply(lambda x : True 
+                                           if (x[colNameYear] == yearTot_list[y] and x["borough"] == boroTot_list[b]) 
+                                           else False, axis = 1)
+            # Count number of True in the series 
+            num_rows = len(temp_df[temp_df == True].index) 
+            lst[y].append(yearTot_list[y])
+            lst[y].append(boroTot_list[b])
+            lst[y].append(num_rows)
+    
+    # column names have to be repeating bc of how double nested list was made
+    newColNames = ["Year1", "Borough1", "Number of Complaints1", 
+                   "Year2", "Borough2", "Number of Complaints2",
+                   "Year3", "Borough3", "Number of Complaints3",
+                   "Year4", "Borough4", "Number of Complaints4",
+                   "Year5", "Borough5", "Number of Complaints5"
+                  ]
+    baseColNames = ["Year", "Borough", colNameComplaints]
+    
+    # create dataframe from double nested list
+    df_new = pd.DataFrame(lst[0:], columns = newColNames)
+    
+    # get columns by 3 and create new df
+    df1 = df_new[df_new.columns[:3]]
+    df2 = df_new[df_new.columns[3:6]]
+    df3 = df_new[df_new.columns[6:9]]
+    df4 = df_new[df_new.columns[9:12]]
+    df5 = df_new[df_new.columns[12:15]]
+    
+    # rename columns
+    df1.columns = baseColNames
+    df2.columns = baseColNames
+    df3.columns = baseColNames
+    df4.columns = baseColNames
+    df5.columns = baseColNames
+    
+    # merge these dataframes row-wise
+    df_out = pd.concat([df1, df2, df3, df4, df5])
+    # change type of year and complaints to int
+    df_out = df_out.astype({"Year": int, colNameComplaints: int})
+    # sort by year
+    df_out = df_out.sort_values(by=["Year"])
+    # reset index
+    df_out = df_out.reset_index(drop=True)
+    
+    return df_out
+```
+
+
+```python
+# this function takes a little time to run
+df_compBoroRec = makeDF_compYear(df_allegations, "year_received", "Num Complaints Received")
+df_compBoroClo = makeDF_compYear(df_allegations, "year_closed", "Num Complaints Closed")
+```
+
+
+```python
+df_CombineComplaints = df_compBoroRec
+df_CombineComplaints["Num Complaints Closed"] = df_compBoroClo["Num Complaints Closed"]
+df_CombineComplaints.tail()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Year</th>
+      <th>Borough</th>
+      <th>Num Complaints Received</th>
+      <th>Num Complaints Closed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>175</th>
+      <td>2020</td>
+      <td>Queens</td>
+      <td>0</td>
+      <td>160</td>
+    </tr>
+    <tr>
+      <th>176</th>
+      <td>2020</td>
+      <td>Manhattan</td>
+      <td>1</td>
+      <td>315</td>
+    </tr>
+    <tr>
+      <th>177</th>
+      <td>2020</td>
+      <td>Staten Island</td>
+      <td>0</td>
+      <td>57</td>
+    </tr>
+    <tr>
+      <th>178</th>
+      <td>2020</td>
+      <td>Brooklyn</td>
+      <td>3</td>
+      <td>184</td>
+    </tr>
+    <tr>
+      <th>179</th>
+      <td>2020</td>
+      <td>Bronx</td>
+      <td>0</td>
+      <td>539</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Now I need the sums of the number of complaints each year, because I need to divide the number of complaints each borough received in a year by the total for that year.
+
+
+```python
+# make lists of years and boroughs
+yearTot_list = list(df_allegations["year_received"].unique())
+# remove NANs from list
+yearTot_list = [x for x in yearTot_list if str(x) != "nan"]
+# empty dataframe with column names
+df_allComplaints = pd.DataFrame(columns = ["Year", "Borough", "Num Complaints Received", "Num Complaints Closed"])
+# loop through the years
+for y in range(len(yearTot_list)):
+    # gets sums of complaints
+    dataTemp = list(df_CombineComplaints.loc[df_CombineComplaints['Year'] == yearTot_list[y], 
+                                             ["Num Complaints Received", "Num Complaints Closed"]].sum())
+    # get year and NYC total
+    temp = [yearTot_list[y], "NYC Total"]
+    # combine results
+    to_append = temp + dataTemp
+    # append to end of df
+    df_allComplaints.loc[len(df_allComplaints)] = to_append
+```
+
+
+```python
+# combine df
+df_all2 = pd.concat([df_CombineComplaints, df_allComplaints])
+# sort by year
+df_all2 = df_all2.sort_values(by=["Year"])
+# reset index
+df_all2 = df_all2.reset_index(drop=True)
+# change type of year and complaints to int
+df_all2 = df_all2.astype({"Year": int, "Num Complaints Received": int, "Num Complaints Closed": int})
+# take log of number complaints
+df_all2["Log(Complaints Rec)"] = np.log(df_all2["Num Complaints Received"])
+df_all2["Log(Complaints Clo)"] = np.log(df_all2["Num Complaints Closed"])
+df_all2[:10]
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Year</th>
+      <th>Borough</th>
+      <th>Num Complaints Received</th>
+      <th>Num Complaints Closed</th>
+      <th>Log(Complaints Rec)</th>
+      <th>Log(Complaints Clo)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1985</td>
+      <td>Queens</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-inf</td>
+      <td>-inf</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1985</td>
+      <td>Bronx</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-inf</td>
+      <td>-inf</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1985</td>
+      <td>Manhattan</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-inf</td>
+      <td>-inf</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1985</td>
+      <td>Brooklyn</td>
+      <td>7</td>
+      <td>0</td>
+      <td>1.945910</td>
+      <td>-inf</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1985</td>
+      <td>Staten Island</td>
+      <td>0</td>
+      <td>7</td>
+      <td>-inf</td>
+      <td>1.945910</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1985</td>
+      <td>NYC Total</td>
+      <td>7</td>
+      <td>7</td>
+      <td>1.945910</td>
+      <td>1.945910</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1986</td>
+      <td>Staten Island</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-inf</td>
+      <td>-inf</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1986</td>
+      <td>Brooklyn</td>
+      <td>17</td>
+      <td>0</td>
+      <td>2.833213</td>
+      <td>-inf</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>1986</td>
+      <td>NYC Total</td>
+      <td>22</td>
+      <td>22</td>
+      <td>3.091042</td>
+      <td>3.091042</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>1986</td>
+      <td>Bronx</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-inf</td>
+      <td>-inf</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+fig, ((ax00, ax01), (ax10, ax11)) = plt.subplots(2, 2, sharey = False, figsize = (15, 15))
+
+plot_numRec = make_linplot(df_all2, "Year", "Num Complaints Received", "Borough", ax00, 1e3, "K", 
+                           "Number complaints received", "Year", "Complaints (Thousands)")
+
+plot_numRec_log = make_linplot(df_all2, "Year", "Log(Complaints Rec)", "Borough", ax01, 1, "", 
+                           "Log(number complaints) received", "Year", "Log(Number of Complaints)")
+
+plot_numClo = make_linplot(df_all2, "Year", "Num Complaints Closed", "Borough", ax10, 1e3, "K", 
+                           "Number complaints closed", "Year", "Complaints (Thousands)")
+
+plot_numClo_log = make_linplot(df_all2, "Year", "Log(Complaints Clo)", "Borough", ax11, 1, "", 
+                           "Log(number complaints) closed", "Year", "Log(Number of Complaints)")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_107_0.png)
+    
+
+
+The number of complaints received does indeed reflect the populations of the five boroughs. Brooklyn receives the most complaints and is the most populous borough, whereas Staten Island receives the least complaints and is the least populous borough. Usually log plots help elucidate the difference between data by showing orders of magnitude, but there is a lot of overlap in the data.
+
+The number of complaints closed does not seem to follow an appreciable pattern. We might have expected a similar curve to the complaints received, but it appears that complaints received in the boroughs almost get completed at random regardless of which borough you come from.
+
+### Relative number of complaints
+<a id = "comp_boro_person_rel"></a>
+
+Let's look at how the boroughs compare with percentages of complaints.
+
+
+```python
+# repeat every row 5 times
+newdf = pd.DataFrame(np.repeat(df_allComplaints.values, 5, axis=0))
+# set columns
+newdf.columns = df_allComplaints.columns
+# set types of columns
+newdf = newdf.astype({"Year": int, "Num Complaints Received": int, "Num Complaints Closed": int})
+# sort by year
+newdf = newdf.sort_values(by=["Year"])
+# reset index
+newdf = newdf.reset_index(drop=True)
+newdf.dtypes
+```
+
+
+
+
+    Year                        int64
+    Borough                    object
+    Num Complaints Received     int64
+    Num Complaints Closed       int64
+    dtype: object
+
+
+
+
+```python
+# empty dataframe with column names
+df_percents = pd.DataFrame(columns = ["Num Complaints Received", "Num Complaints Closed"])
+# calculate % complaints for each year
+for y in range(len(yearTot_list)):
+    df_temp = (df_CombineComplaints.loc[df_CombineComplaints['Year'] == yearTot_list[y], ["Num Complaints Received", "Num Complaints Closed"]]/newdf.loc[newdf['Year'] == yearTot_list[y], ["Num Complaints Received", "Num Complaints Closed"]])*100
+    df_percents = pd.concat([df_percents, df_temp])
+# add year and borough data
+    df_percents["Year"] = df_CombineComplaints['Year']
+df_percents["Borough"] = df_CombineComplaints['Borough']
+# rename columns
+df_percents = df_percents.rename(columns={"Num Complaints Received": "% Received", "Num Complaints Closed": "% Closed"})
+df_percents
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>% Received</th>
+      <th>% Closed</th>
+      <th>Year</th>
+      <th>Borough</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>170</th>
+      <td>41.061623</td>
+      <td>13.540319</td>
+      <td>2019</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>171</th>
+      <td>12.812691</td>
+      <td>36.869340</td>
+      <td>2019</td>
+      <td>Queens</td>
+    </tr>
+    <tr>
+      <th>172</th>
+      <td>15.314216</td>
+      <td>19.620526</td>
+      <td>2019</td>
+      <td>Manhattan</td>
+    </tr>
+    <tr>
+      <th>173</th>
+      <td>3.904820</td>
+      <td>24.708926</td>
+      <td>2019</td>
+      <td>Staten Island</td>
+    </tr>
+    <tr>
+      <th>174</th>
+      <td>26.906650</td>
+      <td>5.260888</td>
+      <td>2019</td>
+      <td>Bronx</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>175</th>
+      <td>0.000000</td>
+      <td>12.749004</td>
+      <td>2020</td>
+      <td>Queens</td>
+    </tr>
+    <tr>
+      <th>176</th>
+      <td>25.000000</td>
+      <td>25.099602</td>
+      <td>2020</td>
+      <td>Manhattan</td>
+    </tr>
+    <tr>
+      <th>177</th>
+      <td>0.000000</td>
+      <td>4.541833</td>
+      <td>2020</td>
+      <td>Staten Island</td>
+    </tr>
+    <tr>
+      <th>178</th>
+      <td>75.000000</td>
+      <td>14.661355</td>
+      <td>2020</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>179</th>
+      <td>0.000000</td>
+      <td>42.948207</td>
+      <td>2020</td>
+      <td>Bronx</td>
+    </tr>
+  </tbody>
+</table>
+<p>180 rows × 4 columns</p>
+</div>
+
+
+
+
+```python
+fig, ((ax00, ax01),(ax10, ax11)) = plt.subplots(2, 2, sharey = False, figsize = (20, 15))
+
+plot_nycpop_share = make_linplot(df_nycpop_copy2, "Year", "Boro share of NYC total", "Borough", ax00, 1, "%", 
+                           "Borough share of NYC total Population from 1980-2020", 
+                               "Year", "Population (% of NYC Total)")
+
+plot_per_rec = make_linplot(df_percents, "Year", "% Received", "Borough", ax01, 1, "%", 
+                           "% of total complaints received", "Year", "Complaints (%)")
+
+plot_per_clo = make_linplot(df_percents, "Year", "% Closed", "Borough", ax11, 1, "%", 
+                           "% of total complaints closed", "Year", "Complaints (%)")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_112_0.png)
+    
+
+
+As we saw before the borough you come from has no effect on when the complaint is closed, it's basically a toss-up for when the complaint will be closed. As for the complaints received, we see something quite interesting. From earlier we know that Brooklyn \~30% of the NYC population, and yet they easily for almost every year we have data have over \~40% of the complaints received. We also know that proportionally Brooklyn has one of the largest black communities, right after the Bronx. We expect Queens to have \~27% of the complaints received but instead it falls below \~20% to sometimes even as low as \~10%.  The Bronx has \~15% of the population and yet \~30% of the complaints, and is the borough with the largest black population. We see that Staten Island does have both the smallest population and the smallest number of complaints, and Manhattan also has \~20% of the population and \~20% of the complaints. It seems, however, that the more diverse the borough the more complaints received against the police, and in numbers that cannot be explained by just the total population growth of said borough. 
+
+# Officers with most complaints
+<a id = "top_offend"></a>
+
+Let's look to see which officers have the most complaints.
+
+
+```python
+officer_most_complaints = df_allegations.unique_mos_id.mode()
+officer_most_complaints
+```
+
+
+
+
+    0    18731
+    1    25861
+    dtype: int64
+
+
+
+
+```python
+df_officer1 = df_allegations[df_allegations["unique_mos_id"] == officer_most_complaints[0]]
+df_officer1.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unique_mos_id</th>
+      <th>first_name</th>
+      <th>last_name</th>
+      <th>full_name</th>
+      <th>command_now</th>
+      <th>shield_no</th>
+      <th>complaint_id</th>
+      <th>month_received</th>
+      <th>year_received</th>
+      <th>date_received</th>
+      <th>...</th>
+      <th>complainant_ethnicity</th>
+      <th>complainant_gender</th>
+      <th>complainant_age_incident</th>
+      <th>fado_type</th>
+      <th>allegation</th>
+      <th>precinct</th>
+      <th>contact_reason</th>
+      <th>outcome_description</th>
+      <th>board_disposition</th>
+      <th>borough</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>7846</th>
+      <td>18731</td>
+      <td>Daniel</td>
+      <td>Sbarra</td>
+      <td>Daniel Sbarra</td>
+      <td>DB CEIS</td>
+      <td>0</td>
+      <td>6832</td>
+      <td>9</td>
+      <td>2003</td>
+      <td>2003-9</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>39.0</td>
+      <td>Discourtesy</td>
+      <td>Word</td>
+      <td>83.0</td>
+      <td>Other</td>
+      <td>No arrest made or summons issued</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>7847</th>
+      <td>18731</td>
+      <td>Daniel</td>
+      <td>Sbarra</td>
+      <td>Daniel Sbarra</td>
+      <td>DB CEIS</td>
+      <td>0</td>
+      <td>6832</td>
+      <td>9</td>
+      <td>2003</td>
+      <td>2003-9</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>39.0</td>
+      <td>Force</td>
+      <td>Physical force</td>
+      <td>83.0</td>
+      <td>Other</td>
+      <td>No arrest made or summons issued</td>
+      <td>Exonerated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>7848</th>
+      <td>18731</td>
+      <td>Daniel</td>
+      <td>Sbarra</td>
+      <td>Daniel Sbarra</td>
+      <td>DB CEIS</td>
+      <td>0</td>
+      <td>7174</td>
+      <td>1</td>
+      <td>2004</td>
+      <td>2004-1</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>30.0</td>
+      <td>Force</td>
+      <td>Physical force</td>
+      <td>83.0</td>
+      <td>EDP aided case</td>
+      <td>No arrest made or summons issued</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>7849</th>
+      <td>18731</td>
+      <td>Daniel</td>
+      <td>Sbarra</td>
+      <td>Daniel Sbarra</td>
+      <td>DB CEIS</td>
+      <td>0</td>
+      <td>7174</td>
+      <td>1</td>
+      <td>2004</td>
+      <td>2004-1</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>30.0</td>
+      <td>Abuse of Authority</td>
+      <td>Other</td>
+      <td>83.0</td>
+      <td>EDP aided case</td>
+      <td>No arrest made or summons issued</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>7850</th>
+      <td>18731</td>
+      <td>Daniel</td>
+      <td>Sbarra</td>
+      <td>Daniel Sbarra</td>
+      <td>DB CEIS</td>
+      <td>0</td>
+      <td>8351</td>
+      <td>10</td>
+      <td>2004</td>
+      <td>2004-10</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>28.0</td>
+      <td>Abuse of Authority</td>
+      <td>Vehicle stop</td>
+      <td>83.0</td>
+      <td>Other</td>
+      <td>No arrest made or summons issued</td>
+      <td>Substantiated (Charges)</td>
+      <td>Brooklyn</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 31 columns</p>
+</div>
+
+
+
+
+```python
+df_officer2 = df_allegations[df_allegations["unique_mos_id"] == officer_most_complaints[1]]
+df_officer2.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unique_mos_id</th>
+      <th>first_name</th>
+      <th>last_name</th>
+      <th>full_name</th>
+      <th>command_now</th>
+      <th>shield_no</th>
+      <th>complaint_id</th>
+      <th>month_received</th>
+      <th>year_received</th>
+      <th>date_received</th>
+      <th>...</th>
+      <th>complainant_ethnicity</th>
+      <th>complainant_gender</th>
+      <th>complainant_age_incident</th>
+      <th>fado_type</th>
+      <th>allegation</th>
+      <th>precinct</th>
+      <th>contact_reason</th>
+      <th>outcome_description</th>
+      <th>board_disposition</th>
+      <th>borough</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>19373</th>
+      <td>25861</td>
+      <td>Mathew</td>
+      <td>Reich</td>
+      <td>Mathew Reich</td>
+      <td>NARCBSI</td>
+      <td>122</td>
+      <td>9066</td>
+      <td>3</td>
+      <td>2005</td>
+      <td>2005-3</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>60.0</td>
+      <td>Discourtesy</td>
+      <td>Word</td>
+      <td>75.0</td>
+      <td>PD suspected C/V of violation/crime - street</td>
+      <td>Summons - disorderly conduct</td>
+      <td>Exonerated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>19374</th>
+      <td>25861</td>
+      <td>Mathew</td>
+      <td>Reich</td>
+      <td>Mathew Reich</td>
+      <td>NARCBSI</td>
+      <td>122</td>
+      <td>9066</td>
+      <td>3</td>
+      <td>2005</td>
+      <td>2005-3</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>60.0</td>
+      <td>Abuse of Authority</td>
+      <td>Question and/or stop</td>
+      <td>75.0</td>
+      <td>PD suspected C/V of violation/crime - street</td>
+      <td>Summons - disorderly conduct</td>
+      <td>Substantiated (Charges)</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>19375</th>
+      <td>25861</td>
+      <td>Mathew</td>
+      <td>Reich</td>
+      <td>Mathew Reich</td>
+      <td>NARCBSI</td>
+      <td>122</td>
+      <td>9066</td>
+      <td>3</td>
+      <td>2005</td>
+      <td>2005-3</td>
+      <td>...</td>
+      <td>Hispanic</td>
+      <td>Male</td>
+      <td>60.0</td>
+      <td>Abuse of Authority</td>
+      <td>Refusal to provide name/shield number</td>
+      <td>75.0</td>
+      <td>PD suspected C/V of violation/crime - street</td>
+      <td>Summons - disorderly conduct</td>
+      <td>Substantiated (Charges)</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>19376</th>
+      <td>25861</td>
+      <td>Mathew</td>
+      <td>Reich</td>
+      <td>Mathew Reich</td>
+      <td>NARCBSI</td>
+      <td>122</td>
+      <td>9335</td>
+      <td>5</td>
+      <td>2005</td>
+      <td>2005-5</td>
+      <td>...</td>
+      <td>Unknown</td>
+      <td>Male</td>
+      <td>15.0</td>
+      <td>Force</td>
+      <td>Physical force</td>
+      <td>75.0</td>
+      <td>Report of other crime</td>
+      <td>Arrest - other violation/crime</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>19377</th>
+      <td>25861</td>
+      <td>Mathew</td>
+      <td>Reich</td>
+      <td>Mathew Reich</td>
+      <td>NARCBSI</td>
+      <td>122</td>
+      <td>13162</td>
+      <td>3</td>
+      <td>2007</td>
+      <td>2007-3</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>31.0</td>
+      <td>Abuse of Authority</td>
+      <td>Search (of person)</td>
+      <td>67.0</td>
+      <td>PD suspected C/V of violation/crime - auto</td>
+      <td>No arrest made or summons issued</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 31 columns</p>
+</div>
+
+
+
+
+```python
+print("There are two officers tied for most complaints.")
+print("The first is", df_officer1["full_name"].unique()[0], "with", len(df_officer1), "complaints.")
+print("The second is", df_officer2["full_name"].unique()[0], "with", len(df_officer2), "complaints.")
+```
+
+    There are two officers tied for most complaints.
+    The first is Daniel Sbarra with 75 complaints.
+    The second is Mathew Reich with 75 complaints.
+
+
+## First Officer
+<a id = "offend1"></a>
+
+
+```python
+# plot side by side
+fig, ((ax00,ax01),(ax10,ax11)) = plt.subplots(2, 2, sharey = False, figsize=(15, 15))
+
+sns.set()
+sns.set_context("talk", font_scale = 1) 
+
+hist1 = make_histplotLegend(df_officer1, "year_received", "probability", "complainant_ethnicity", 50, ax00, 
+                                 "Racial breakdown of complainants", 
+                                 "Year")
+
+hist2 = make_histplotLegend(df_officer1, "year_received", "probability", "board_disposition", 50, ax01, 
+                                 "Board disposition of complaints", 
+                                 "Year")
+
+
+hist3 = make_histplotLegend(df_officer1, "year_received", "probability", "rank_incident", 50, ax10, 
+                                 "Rank of officer at time of incident", 
+                                 "Year")
+
+hist4 = make_histplotLegend(df_officer1, "year_received", "probability", "fado_type", 50, ax11, 
+                                 "FADO category of complaints", 
+                                 "Year")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_121_0.png)
+    
+
+
+All of the complaints against Sbarra have been from either black individuals or hispanic individuals. It should be noted that he does work in Brooklyn. There are several board dispositions associated with the complaints. The decisions are as follows:
+1. Substantiated: 
+    1. The alleged conduct occurred and it violated the rules. The NYPD can choose to ignore those recommendations. It has discretion over what, if any, discipline is imposed.
+1. Exonerated: 
+    1. The alleged conduct occurred but did not violate the NYPD’s rules, which often give officers significant discretion over use of force.
+1. Unsubstantiated:
+    1. The CCRB has fully investigated but could not affirmatively conclude both that the conduct occurred and that it broke the rules.
+
+It seems that the majority of the complaints against Sbarra were either found to be Unsubstantiated or Exonerated. There *were* several that were substantiated and resulted in command discipline, and a good majority of Sbarra's complaints were for abuse of authority. 
+
+## Second Officer
+<a id = "offend2"></a>
+
+
+```python
+# plot side by side
+fig, ((ax00,ax01),(ax10,ax11)) = plt.subplots(2, 2, sharey = False, figsize=(15, 15))
+
+sns.set()
+sns.set_context("talk", font_scale = 1) 
+
+hist1 = make_histplotLegend(df_officer2, "year_received", "probability", "complainant_ethnicity", 50, ax00, 
+                                 "Racial breakdown of complainants", 
+                                 "Year")
+
+hist2 = make_histplotLegend(df_officer2, "year_received", "probability", "board_disposition", 50, ax01, 
+                                 "Board disposition of complaints", 
+                                 "Year")
+
+
+hist3 = make_histplotLegend(df_officer2, "year_received", "probability", "rank_incident", 50, ax10, 
+                                 "Rank of officer at time of incident", 
+                                 "Year")
+
+hist4 = make_histplotLegend(df_officer2, "year_received", "probability", "fado_type", 50, ax11, 
+                                 "FADO category of complaints", 
+                                 "Year")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_124_0.png)
+    
+
+
+Reich has a much different history than Sbarra. Reich works in the Narcotics Borough of Staten Island and the majority of individuals filing incidents against Reich are white. The majority of the complaints against Reich were found to be unsubstantiated. Reich could be potentially dealing with a lot of individuals involved with narcotics in Staten Island, and that might explain the fact that white people are mostly filing incidents with him. 
+
+## Officers with top 1% of complaints
+<a id = "top10"></a>
+
+It is possible that there is a trend of who files complaints against the cops that have tho most complaints. We will sort them by how many complaints each officer has, and take the top 1% of those. 
+
+
+```python
+import collections
+# create list of officer IDs
+IDs_list = list(df_allegations["unique_mos_id"])
+# remove NANs from list
+IDs_list = [x for x in IDs_list if str(x) != "nan"]
+# frequency of elements in list
+counter = collections.Counter(IDs_list)
+# convert counter to df
+df_counterIDs = pd.DataFrame.from_dict(counter, orient='index', columns=["Frequency"]).reset_index()
+# rename index
+df_counterIDs = df_counterIDs.rename(columns = {'index': 'Officer ID'})
+# sort by frequency 
+df_counterIDs = df_counterIDs.sort_values(by = ['Frequency'], ascending=False)
+# show dataframe
+df_counterIDs
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Officer ID</th>
+      <th>Frequency</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>947</th>
+      <td>18731</td>
+      <td>75</td>
+    </tr>
+    <tr>
+      <th>2168</th>
+      <td>25861</td>
+      <td>75</td>
+    </tr>
+    <tr>
+      <th>1091</th>
+      <td>19489</td>
+      <td>73</td>
+    </tr>
+    <tr>
+      <th>884</th>
+      <td>18530</td>
+      <td>73</td>
+    </tr>
+    <tr>
+      <th>897</th>
+      <td>18589</td>
+      <td>72</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>682</th>
+      <td>16694</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>675</th>
+      <td>16633</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>673</th>
+      <td>16604</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3204</th>
+      <td>3933</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>10004</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+<p>3994 rows × 2 columns</p>
+</div>
+
+
+
+Okay, we've got each officer's ID and the frequency of complaints against them. Let's look at the "top" officers, the ones that the most complaints. Because we're looking at the "top 5%" this will be most frequent 200 officers.
+
+
+```python
+# get only top 200 officers
+df_counterID_top5 = df_counterIDs[:200]
+# create list of their IDs
+top200_ID = (df_counterID_top5["Officer ID"])
+# use list of IDs to create new df of their results
+df_top200 = df_allegations.loc[df_allegations['unique_mos_id'].isin(top200_ID)]
+# show df
+df_top200.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>unique_mos_id</th>
+      <th>first_name</th>
+      <th>last_name</th>
+      <th>full_name</th>
+      <th>command_now</th>
+      <th>shield_no</th>
+      <th>complaint_id</th>
+      <th>month_received</th>
+      <th>year_received</th>
+      <th>date_received</th>
+      <th>...</th>
+      <th>complainant_ethnicity</th>
+      <th>complainant_gender</th>
+      <th>complainant_age_incident</th>
+      <th>fado_type</th>
+      <th>allegation</th>
+      <th>precinct</th>
+      <th>contact_reason</th>
+      <th>outcome_description</th>
+      <th>board_disposition</th>
+      <th>borough</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>12</th>
+      <td>10026</td>
+      <td>Brian</td>
+      <td>Alexander</td>
+      <td>Brian Alexander</td>
+      <td>079 DET</td>
+      <td>3185</td>
+      <td>35092</td>
+      <td>5</td>
+      <td>2016</td>
+      <td>2016-5</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>30.0</td>
+      <td>Abuse of Authority</td>
+      <td>Search (of person)</td>
+      <td>79.0</td>
+      <td>Moving violation</td>
+      <td>No arrest made or summons issued</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>10026</td>
+      <td>Brian</td>
+      <td>Alexander</td>
+      <td>Brian Alexander</td>
+      <td>079 DET</td>
+      <td>3185</td>
+      <td>26353</td>
+      <td>8</td>
+      <td>2012</td>
+      <td>2012-8</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>35.0</td>
+      <td>Force</td>
+      <td>Pepper spray</td>
+      <td>79.0</td>
+      <td>PD suspected C/V of violation/crime - street</td>
+      <td>Arrest - OGA</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>10026</td>
+      <td>Brian</td>
+      <td>Alexander</td>
+      <td>Brian Alexander</td>
+      <td>079 DET</td>
+      <td>3185</td>
+      <td>27482</td>
+      <td>3</td>
+      <td>2013</td>
+      <td>2013-3</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>42.0</td>
+      <td>Force</td>
+      <td>Physical force</td>
+      <td>79.0</td>
+      <td>Regulatory inspection</td>
+      <td>Arrest - other violation/crime</td>
+      <td>Exonerated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>10026</td>
+      <td>Brian</td>
+      <td>Alexander</td>
+      <td>Brian Alexander</td>
+      <td>079 DET</td>
+      <td>3185</td>
+      <td>27482</td>
+      <td>3</td>
+      <td>2013</td>
+      <td>2013-3</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>42.0</td>
+      <td>Offensive Language</td>
+      <td>Race</td>
+      <td>79.0</td>
+      <td>Regulatory inspection</td>
+      <td>Arrest - other violation/crime</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>10026</td>
+      <td>Brian</td>
+      <td>Alexander</td>
+      <td>Brian Alexander</td>
+      <td>079 DET</td>
+      <td>3185</td>
+      <td>27482</td>
+      <td>3</td>
+      <td>2013</td>
+      <td>2013-3</td>
+      <td>...</td>
+      <td>Black</td>
+      <td>Male</td>
+      <td>46.0</td>
+      <td>Force</td>
+      <td>Handcuffs too tight</td>
+      <td>79.0</td>
+      <td>Regulatory inspection</td>
+      <td>Arrest - other violation/crime</td>
+      <td>Unsubstantiated</td>
+      <td>Brooklyn</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 31 columns</p>
+</div>
+
+
+
+Okay, let's give these results a look.
+
+
+```python
+# plot side by side
+fig, ((ax00,ax01),(ax10,ax11)) = plt.subplots(2, 2, sharey = False, figsize=(15, 15))
+
+sns.set()
+sns.set_context("talk", font_scale = 1) 
+
+hist11 = make_histplotLegend(df_top200, "unique_mos_id", "probability", "complainant_ethnicity", 100, ax00, 
+                                 "Racial breakdown of complainants", 
+                                 "Officer ID")
+
+hist21 = make_histplotLegend(df_top200, "unique_mos_id", "probability", "mos_ethnicity", 100, ax01, 
+                                 "Racial breakdown of officers", 
+                                 "Officer ID")
+
+
+hist31 = make_histplotLegend(df_top200, "precinct", "probability", "complainant_ethnicity", 100, ax10, 
+                                 "Racial breakdown of complainants", 
+                                 "Precinct Number")
+
+hist41 = make_histplotLegend(df_top200, "precinct", "probability", "mos_ethnicity", 100, ax11, 
+                                 "Racial breakdown of officers", 
+                                 "Precinct Number")
+
+plt.show()
+```
+
+
+    
+![png](output_files/output_131_0.png)
+    
+
+
+As we can see most of the complaints come from black individuals, followed by hispanic individuals. This is true across all the boroughs, when we consider the top 200 officers with the most complaints. This is true even in boroughs that have proportionally higher white populations, such as Manhattan or Staten Island. On the other hand, the majority of these cops are white. 
+
+# Conclusion
+<a id = "conclu"></a>
+
+If there were no bias in targeting individuals of color we would expect the proportion of complaints to reflect the racial compositions of each borough. We would expect more black individuals to file complaints in the Bronx and Brooklyn simply because their populations are larger there, and that more white individuals would file in whiter boroughs such as Manhattan and Queens. We would also expect more Asian individuals to file complaints in Queens, which has such a large Asian community where compared proportionally to the other boroughs. However, this does not appear to be the case. Across the board we have seen that boroughs with more black individuals file more incidents against the NYPD than other boroughs, in percentages far greater than the borough's share of NYC's total population. In order to file an incident and complaint this means that you have had an encounter with the NYPD that was enough to make you file, meaning that in all boroughs, from what has been reported, black individuals have had more encounters with the NYPD than can be explained simply by increasing population values.
